@@ -7,11 +7,9 @@ import android.view.MenuItem;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
@@ -21,12 +19,14 @@ import com.example.ojt_aada_mockproject1_trint28.databinding.ActivityMainBinding
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
     private MainViewModel viewModel;
     private NavController navController;
-    private String movieType = "popular";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(binding.toolbar);
 
         // Thiết lập Navigation Component
-        // Sử dụng NavHostFragment để lấy NavController
         Fragment navHostFragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         if (navHostFragment instanceof NavHostFragment) {
             navController = ((NavHostFragment) navHostFragment).getNavController();
@@ -89,7 +88,10 @@ public class MainActivity extends AppCompatActivity {
         // Cập nhật tiêu đề ActionBar
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             if (destination.getId() == R.id.movieListFragment) {
-                getSupportActionBar().setTitle(movieType.replace("_", " ").toUpperCase());
+                String currentMovieType = viewModel.getMovieType().getValue();
+                if (currentMovieType != null) {
+                    getSupportActionBar().setTitle(currentMovieType.replace("_", " ").toUpperCase());
+                }
             } else if (destination.getId() == R.id.favoriteFragment) {
                 getSupportActionBar().setTitle("Favourite");
             } else if (destination.getId() == R.id.settingsFragment) {
@@ -117,19 +119,25 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
+        // Cập nhật movieType thông qua ViewModel
         if (item.getItemId() == R.id.menu_popular) {
-            movieType = "popular";
+            viewModel.setMovieType("popular");
         } else if (item.getItemId() == R.id.menu_top_rated) {
-            movieType = "top_rated";
+            viewModel.setMovieType("top_rated");
         } else if (item.getItemId() == R.id.menu_upcoming) {
-            movieType = "upcoming";
+            viewModel.setMovieType("upcoming");
         } else if (item.getItemId() == R.id.menu_now_playing) {
-            movieType = "now_playing";
+            viewModel.setMovieType("now_playing");
         } else {
             return super.onOptionsItemSelected(item);
         }
 
-        getSupportActionBar().setTitle(movieType.replace("_", " ").toUpperCase());
+        // Cập nhật tiêu đề ActionBar dựa trên movieType từ ViewModel
+        String currentMovieType = viewModel.getMovieType().getValue();
+        if (currentMovieType != null) {
+            getSupportActionBar().setTitle(currentMovieType.replace("_", " ").toUpperCase());
+        }
+
         return true;
     }
 

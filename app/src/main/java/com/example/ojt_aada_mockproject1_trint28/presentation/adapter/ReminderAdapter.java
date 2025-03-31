@@ -1,6 +1,5 @@
-package com.example.ojt_aada_mockproject1_trint28.presentation.ui.reminders;
+package com.example.ojt_aada_mockproject1_trint28.presentation.adapter;
 
-import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;

@@ -11,6 +11,9 @@ import androidx.fragment.app.Fragment;
 
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentShowAllRemindersBinding;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class ShowAllRemindersFragment extends Fragment {
 
     private FragmentShowAllRemindersBinding binding;

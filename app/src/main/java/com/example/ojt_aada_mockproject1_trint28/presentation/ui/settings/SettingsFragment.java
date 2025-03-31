@@ -11,6 +11,9 @@ import androidx.fragment.app.Fragment;
 
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentSettingsBinding;
 
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
 public class SettingsFragment extends Fragment {
 
     private FragmentSettingsBinding binding;

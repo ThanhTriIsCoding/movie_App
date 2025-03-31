@@ -3,6 +3,9 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id 'com.google.gms.google-services'
+    id 'com.google.dagger.hilt.android'
+    id 'kotlin-kapt'
+
 }
 
 android {
@@ -77,15 +80,28 @@ dependencies {
     implementation "androidx.room:room-rxjava3:2.6.1"
     annotationProcessor  "androidx.room:room-compiler:2.6.1"
 
-    // Networking & RxJava
-    implementation "com.squareup.retrofit2:adapter-rxjava3:2.9.0"
-    implementation "io.reactivex.rxjava3:rxandroid:3.0.2"
+    // Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava3:2.9.0'
+
+    // RxJava
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.5'
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
 
     // Paging
-    implementation "androidx.paging:paging-runtime:3.2.1"
-    implementation "androidx.paging:paging-rxjava3:3.2.1"
+    implementation 'androidx.paging:paging-runtime:3.2.1'
+    implementation 'androidx.paging:paging-rxjava3:3.2.1'
 
     // Dagger
     implementation "com.google.dagger:dagger:2.52"
     annotationProcessor  "com.google.dagger:dagger-compiler:2.52"
+
+    // Picasso
+    implementation 'com.squareup.picasso:picasso:2.8'
+
+    //Hilt
+    implementation "com.google.dagger:hilt-android:2.51.1"
+    kapt "com.google.dagger:hilt-compiler:2.51.1"
+
 }
