@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "509641919957",
+    "project_id": "mockprojectandroidadvanced",
+    "storage_bucket": "mockprojectandroidadvanced.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:509641919957:android:41f27132b69cb42266415c",
+        "android_client_info": {
+          "package_name": "com.example.ojt_aada_mockproject1_trint28"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtDepi9rueR8KTx7XPDBhxvQ_fgvCmzOk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

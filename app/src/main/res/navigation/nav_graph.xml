@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/movieListFragment">
+
+    <!-- Movies Tab -->
+    <fragment
+        android:id="@+id/movieListFragment"
+        android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment"
+        android:label="Movies" />
+
+    <!-- Favourite Tab -->
+    <fragment
+        android:id="@+id/favoriteFragment"
+        android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFavouriteFragment"
+        android:label="Favourite" />
+
+    <!-- Settings Tab -->
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.settings.SettingsFragment"
+        android:label="Settings" />
+
+    <!-- About Tab -->
+    <fragment
+        android:id="@+id/aboutFragment"
+        android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.about.AboutFragment"
+        android:label="About" />
+
+    <!-- Global actions for Navigation Drawer -->
+    <action
+        android:id="@+id/action_global_movieDetailsFragment"
+        app:destination="@id/movieDetailsFragment" />
+
+    <action
+        android:id="@+id/action_global_profileFragment"
+        app:destination="@id/profileFragment" />
+
+    <action
+        android:id="@+id/action_global_showAllRemindersFragment"
+        app:destination="@id/showAllRemindersFragment" />
+
+    <!-- Movie Details Fragment -->
+    <fragment
+        android:id="@+id/movieDetailsFragment"
+        android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.moviedetails.MovieDetailFragment"
+        android:label="Movie Details" />
+
+    <!-- Profile Fragment -->
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.ProfileFragment"
+        android:label="Profile" />
+
+    <!-- Show All Reminders Fragment -->
+    <fragment
+        android:id="@+id/showAllRemindersFragment"
+        android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.reminders.ShowAllRemindersFragment"
+        android:label="All Reminders" />
+</navigation>
