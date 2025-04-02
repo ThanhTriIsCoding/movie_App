@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:theme="@style/CustomPreferenceTheme">
+
+    <!-- Phần FILTER -->
+    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreferenceCategory
+        android:title="FILTER"
+        app:iconSpaceReserved="false" />
+
+    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreference
+        android:key="category"
+        android:title="Category:"
+        android:summary="Popular Movies" />
+
+    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreference
+        android:key="rate"
+        android:title="Movie with rate from:"
+        android:summary="5" />
+
+    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreference
+        android:key="release_year"
+        android:title="From release year:"
+        android:summary="2015" />
+
+    <!-- Phần SORT -->
+    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreferenceCategory
+        android:title="SORT"
+        app:iconSpaceReserved="false" />
+
+    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreference
+        android:key="sort_by"
+        android:title="Sort By:"
+        android:summary="Release Date" />
+
+    <!-- Nút Reset -->
+    <Preference
+        android:key="reset_settings"
+        android:title="Reset Settings"
+        android:summary="Click to reset all filters and sorting"
+        app:iconSpaceReserved="false" />
+</PreferenceScreen>

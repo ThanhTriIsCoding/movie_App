@@ -1,5 +1,6 @@
 package com.example.ojt_aada_mockproject1_trint28.presentation.ui.main;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,8 +17,11 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ActivityMainBinding;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.UpdateSettingsUseCase;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -27,6 +31,12 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private MainViewModel viewModel;
     private NavController navController;
+
+    @Inject
+    SharedPreferences sharedPreferences;
+
+    @Inject
+    UpdateSettingsUseCase updateSettingsUseCase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,17 +129,32 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-        // Cập nhật movieType thông qua ViewModel
+        // Cập nhật movieType thông qua ViewModel và đồng bộ với SharedPreferences
+        String movieType = null;
+        String selectedCategory = null;
         if (item.getItemId() == R.id.menu_popular) {
-            viewModel.setMovieType("popular");
+            movieType = "popular";
+            selectedCategory = "Popular Movies";
         } else if (item.getItemId() == R.id.menu_top_rated) {
-            viewModel.setMovieType("top_rated");
+            movieType = "top_rated";
+            selectedCategory = "Top Rated Movies";
         } else if (item.getItemId() == R.id.menu_upcoming) {
-            viewModel.setMovieType("upcoming");
+            movieType = "upcoming";
+            selectedCategory = "Upcoming Movies";
         } else if (item.getItemId() == R.id.menu_now_playing) {
-            viewModel.setMovieType("now_playing");
+            movieType = "now_playing";
+            selectedCategory = "Now Playing Movies";
         } else {
             return super.onOptionsItemSelected(item);
+        }
+
+        // Update MainViewModel
+        viewModel.setMovieType(movieType);
+
+        // Update SharedPreferences and UpdateSettingsUseCase
+        if (selectedCategory != null) {
+            sharedPreferences.edit().putString("category", selectedCategory).apply();
+            updateSettingsUseCase.updateCategory(selectedCategory).subscribe();
         }
 
         // Cập nhật tiêu đề ActionBar dựa trên movieType từ ViewModel

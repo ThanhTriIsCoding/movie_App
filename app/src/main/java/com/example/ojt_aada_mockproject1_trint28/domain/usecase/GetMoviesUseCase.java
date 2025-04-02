@@ -2,15 +2,15 @@ package com.example.ojt_aada_mockproject1_trint28.domain.usecase;
 
 import androidx.paging.PagingData;
 
-import com.example.ojt_aada_mockproject1_trint28.data.repository.MovieRepository;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
+import com.example.ojt_aada_mockproject1_trint28.domain.repository.IMovieRepository;
 
 import io.reactivex.rxjava3.core.Flowable;
 
 public class GetMoviesUseCase {
-    private final MovieRepository movieRepository;
+    private final IMovieRepository movieRepository;
 
-    public GetMoviesUseCase(MovieRepository movieRepository) {
+    public GetMoviesUseCase(IMovieRepository movieRepository) {
         this.movieRepository = movieRepository;
     }
 

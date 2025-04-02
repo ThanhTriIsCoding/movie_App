@@ -12,4 +12,9 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
+    <style name="CustomPreferenceTheme" parent="PreferenceThemeOverlay">
+        <item name="android:textColorPrimary">#000000</item> x
+        <item name="android:textSize">30sp</item>
+        <item name="android:background">#000000</item>
+    </style>
 </resources>

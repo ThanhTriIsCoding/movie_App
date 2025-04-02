@@ -9,6 +9,11 @@ import com.example.ojt_aada_mockproject1_trint28.data.remote.api.ApiService;
 import com.example.ojt_aada_mockproject1_trint28.data.remote.model.MovieListResponse;
 import com.example.ojt_aada_mockproject1_trint28.data.remote.model.MovieResponse;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
+import com.example.ojt_aada_mockproject1_trint28.domain.model.Settings;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -18,13 +23,15 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
     private final ApiService apiService;
     private final String apiKey;
     private final String movieType;
-    private String imageBaseUrl = "https://image.tmdb.org/t/p/"; // Giá trị mặc định
-    private String posterSize = "w500"; // Giá trị mặc định
+    private final Settings settings;
+    private String imageBaseUrl = "https://image.tmdb.org/t/p/";
+    private String posterSize = "w500";
 
-    public MoviePagingSource(ApiService apiService, String apiKey, String movieType, String imageBaseUrl, String posterSize) {
+    public MoviePagingSource(ApiService apiService, String apiKey, String movieType, Settings settings, String imageBaseUrl, String posterSize) {
         this.apiService = apiService;
         this.apiKey = apiKey;
         this.movieType = movieType;
+        this.settings = settings;
         this.imageBaseUrl = imageBaseUrl != null ? imageBaseUrl : this.imageBaseUrl;
         this.posterSize = posterSize != null ? posterSize : this.posterSize;
     }
@@ -54,11 +61,31 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
         return request
                 .subscribeOn(Schedulers.io())
                 .map(response -> {
+                    List<Movie> movies = response.getResults().stream()
+                            .map(this::mapToDomain)
+                            .filter(movie -> {
+                                boolean matchesRating = movie.getVoteAverage() >= settings.getMinRating();
+                                boolean matchesYear = true; // Default to true if release date is invalid
+                                try {
+                                    String releaseDate = movie.getReleaseDate();
+                                    if (releaseDate != null && !releaseDate.isEmpty()) {
+                                        int year = Integer.parseInt(releaseDate.split("-")[0]);
+                                        matchesYear = year >= settings.getReleaseYear();
+                                    }
+                                } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                                    // If parsing fails, exclude the movie
+                                    matchesYear = false;
+                                }
+                                return matchesRating && matchesYear;
+                            })
+                            .sorted(settings.getSortBy().equals("rating") ?
+                                    Comparator.comparing(Movie::getVoteAverage).reversed() :
+                                    Comparator.comparing(Movie::getReleaseDate, Comparator.nullsLast(String::compareTo)).reversed())
+                            .collect(Collectors.toList());
+
                     Integer nextKey = (page < response.getTotalPages()) ? page + 1 : null;
                     return (LoadResult<Integer, Movie>) new LoadResult.Page<>(
-                            response.getResults().stream()
-                                    .map(this::mapToDomain)
-                                    .collect(java.util.stream.Collectors.toList()),
+                            movies,
                             page == 1 ? null : page - 1, // prevKey
                             nextKey // nextKey
                     );
