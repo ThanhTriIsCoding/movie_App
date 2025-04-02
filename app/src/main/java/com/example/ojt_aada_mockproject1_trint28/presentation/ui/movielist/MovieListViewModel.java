@@ -1,5 +1,7 @@
 package com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.paging.PagingData;
 
@@ -20,6 +22,7 @@ public class MovieListViewModel extends ViewModel {
     private final UpdateSettingsUseCase updateSettingsUseCase;
     private final String apiKey;
     private Settings currentSettings;
+    private final MutableLiveData<Integer> scrollPosition = new MutableLiveData<>(0); // Default to 0
 
     @Inject
     public MovieListViewModel(GetMoviesUseCase getMoviesUseCase, UpdateSettingsUseCase updateSettingsUseCase, String apiKey) {
@@ -42,5 +45,13 @@ public class MovieListViewModel extends ViewModel {
 
     public Settings getCurrentSettings() {
         return currentSettings;
+    }
+
+    public LiveData<Integer> getScrollPosition() {
+        return scrollPosition;
+    }
+
+    public void setScrollPosition(int position) {
+        scrollPosition.setValue(position);
     }
 }

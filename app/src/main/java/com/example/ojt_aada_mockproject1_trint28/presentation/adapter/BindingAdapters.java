@@ -1,6 +1,7 @@
 package com.example.ojt_aada_mockproject1_trint28.presentation.adapter;
 
 import android.widget.ImageView;
+import android.widget.RadioGroup;
 
 import androidx.databinding.BindingAdapter;
 
@@ -22,5 +23,15 @@ public class BindingAdapters {
         } else {
             imageView.setImageResource(R.drawable.ic_launcher_foreground);
         }
+    }
+
+    @BindingAdapter("onCheckedChanged")
+    public static void setOnCheckedChangeListener(RadioGroup radioGroup, RadioGroup.OnCheckedChangeListener listener) {
+        radioGroup.setOnCheckedChangeListener(listener);
+    }
+
+    @BindingAdapter("checkedButton")
+    public static void setCheckedButton(RadioGroup radioGroup, int buttonId) {
+        radioGroup.check(buttonId);
     }
 }

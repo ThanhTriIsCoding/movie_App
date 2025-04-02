@@ -73,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
         binding.tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                // Update the selected tab position in ViewModel
+                viewModel.setSelectedTabPosition(tab.getPosition());
+                // Navigate to the corresponding fragment
                 switch (tab.getPosition()) {
                     case 0:
                         navController.navigate(R.id.movieListFragment);
@@ -93,6 +96,18 @@ public class MainActivity extends AppCompatActivity {
             public void onTabUnselected(TabLayout.Tab tab) {}
             @Override
             public void onTabReselected(TabLayout.Tab tab) {}
+        });
+
+        // Observe the selected tab position from ViewModel to restore it
+        viewModel.getSelectedTabPosition().observe(this, position -> {
+            if (position != null) {
+                // Select the tab in TabLayout
+                TabLayout.Tab tab = binding.tabLayout.getTabAt(position);
+                if (tab != null && !tab.isSelected()) {
+                    tab.select();
+                    // The onTabSelected listener will handle navigation to the correct fragment
+                }
+            }
         });
 
         // Cập nhật tiêu đề ActionBar

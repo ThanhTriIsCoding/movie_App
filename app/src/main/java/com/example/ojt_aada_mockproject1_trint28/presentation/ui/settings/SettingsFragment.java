@@ -34,6 +34,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     private SharedPreferences sharedPreferences;
     private MovieListViewModel movieListViewModel;
     private MainViewModel mainViewModel;
+    private SettingsViewModel settingsViewModel;
 
     @Inject
     MovieListViewModelFactory movieListViewModelFactory;
@@ -49,6 +50,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         // Initialize ViewModels
         movieListViewModel = new ViewModelProvider(this, movieListViewModelFactory).get(MovieListViewModel.class);
         mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
+        settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
 
         // Observe movieType changes from MainViewModel to update category
         mainViewModel.getMovieType().observe(this, movieType -> {
@@ -70,11 +72,15 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                     selectedCategory = "Popular Movies";
                     break;
             }
-            // Update SharedPreferences and UpdateSettingsUseCase to ensure consistency
-            sharedPreferences.edit().putString("category", selectedCategory).apply();
-            updateSettingsUseCase.updateCategory(selectedCategory).subscribe();
+            settingsViewModel.setCategory(selectedCategory);
             updatePreferenceSummary(findPreference("category"));
         });
+
+        // Observe settings changes from SettingsViewModel to update UI
+        settingsViewModel.getCategory().observe(this, category -> updatePreferenceSummary(findPreference("category")));
+        settingsViewModel.getRating().observe(this, rating -> updatePreferenceSummary(findPreference("rate")));
+        settingsViewModel.getReleaseYear().observe(this, year -> updatePreferenceSummary(findPreference("release_year")));
+        settingsViewModel.getSortBy().observe(this, sortBy -> updatePreferenceSummary(findPreference("sort_by")));
 
         // Setup preferences
         setupPreference(findPreference("category"), R.layout.fragment_category);
@@ -86,7 +92,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         Preference resetPreference = findPreference("reset_settings");
         if (resetPreference != null) {
             resetPreference.setOnPreferenceClickListener(p -> {
-                resetSettings();
+                settingsViewModel.resetSettings();
+                refreshMovieList();
                 return true;
             });
         }
@@ -110,13 +117,6 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         AlertDialog dialog = builder.create();
         dialog.show();
 
-        // Gán sự kiện đóng dialog khi bấm Cancel hoặc No
-        View cancelBtn = dialogView.findViewById(R.id.tvCancel);
-        if (cancelBtn != null) cancelBtn.setOnClickListener(v -> dialog.dismiss());
-
-        View noBtn = dialogView.findViewById(R.id.tvNo);
-        if (noBtn != null) noBtn.setOnClickListener(v -> dialog.dismiss());
-
         if (layoutResId == R.layout.fragment_category) {
             handleCategoryDialog(dialogView, dialog, preference);
         } else if (layoutResId == R.layout.fragment_rating_filter) {
@@ -130,100 +130,30 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
     private void handleCategoryDialog(View dialogView, AlertDialog dialog, Preference preference) {
         FragmentCategoryBinding binding = FragmentCategoryBinding.bind(dialogView);
-
-        // Map the current category to the corresponding RadioButton
-        String currentCategory = sharedPreferences.getString(preference.getKey(), "Popular Movies");
-        switch (currentCategory) {
-            case "Popular Movies":
-                binding.radioGroupCategory.check(R.id.rb_popular);
-                break;
-            case "Top Rated Movies":
-                binding.radioGroupCategory.check(R.id.rb_top_rated);
-                break;
-            case "Upcoming Movies":
-                binding.radioGroupCategory.check(R.id.rb_upcoming);
-                break;
-            case "Now Playing Movies":
-                binding.radioGroupCategory.check(R.id.rb_now_playing);
-                break;
-        }
-
-        binding.radioGroupCategory.setOnCheckedChangeListener((group, checkedId) -> {
-            String selectedCategory;
-            String movieType;
-            if (checkedId == R.id.rb_popular) {
-                selectedCategory = "Popular Movies";
-                movieType = "popular";
-            } else if (checkedId == R.id.rb_top_rated) {
-                selectedCategory = "Top Rated Movies";
-                movieType = "top_rated";
-            } else if (checkedId == R.id.rb_upcoming) {
-                selectedCategory = "Upcoming Movies";
-                movieType = "upcoming";
-            } else if (checkedId == R.id.rb_now_playing) {
-                selectedCategory = "Now Playing Movies";
-                movieType = "now_playing";
-            } else {
-                return; // No selection, do nothing
-            }
-
-            // Update SharedPreferences and settings
-            sharedPreferences.edit().putString(preference.getKey(), selectedCategory).apply();
-            updateSettingsUseCase.updateCategory(selectedCategory).subscribe();
-            updatePreferenceSummary(preference);
-
-            // Update the movie type in MainViewModel to refresh the movie list
-            mainViewModel.setMovieType(movieType);
-            refreshMovieList();
-            dialog.dismiss();
-        });
+        binding.setViewModel(settingsViewModel);
+        binding.setDialog(dialog);
+        binding.setLifecycleOwner(this);
     }
 
     private void handleRatingDialog(View dialogView, AlertDialog dialog, Preference preference) {
         FragmentRatingFilterBinding binding = FragmentRatingFilterBinding.bind(dialogView);
-        binding.seekBarRating.setProgress(sharedPreferences.getInt(preference.getKey(), 5));
-
-        binding.tvYes.setOnClickListener(v -> {
-            int rating = binding.seekBarRating.getProgress();
-            sharedPreferences.edit().putInt(preference.getKey(), rating).apply();
-            updateSettingsUseCase.updateRating(rating).subscribe();
-            updatePreferenceSummary(preference);
-            refreshMovieList();
-            dialog.dismiss();
-        });
+        binding.setViewModel(settingsViewModel);
+        binding.setDialog(dialog);
+        binding.setLifecycleOwner(this);
     }
 
     private void handleReleaseYearDialog(View dialogView, AlertDialog dialog, Preference preference) {
         FragmentReleaseYearBinding binding = FragmentReleaseYearBinding.bind(dialogView);
-        binding.etReleaseYear.setText(sharedPreferences.getString(preference.getKey(), "2015"));
-
-        binding.tvOk.setOnClickListener(v -> {
-            String year = binding.etReleaseYear.getText().toString().trim();
-            if (!year.isEmpty()) {
-                sharedPreferences.edit().putString(preference.getKey(), year).apply();
-                updateSettingsUseCase.updateReleaseYear(Integer.parseInt(year)).subscribe();
-                updatePreferenceSummary(preference);
-                refreshMovieList();
-            }
-            dialog.dismiss();
-        });
+        binding.setViewModel(settingsViewModel);
+        binding.setDialog(dialog);
+        binding.setLifecycleOwner(this);
     }
 
     private void handleSortDialog(View dialogView, AlertDialog dialog, Preference preference) {
         FragmentSortBinding binding = FragmentSortBinding.bind(dialogView);
-        int selectedId = sharedPreferences.getInt(preference.getKey(), R.id.rb_release_date);
-        binding.radioGroupSort.check(selectedId);
-
-        binding.tvOk.setOnClickListener(v -> {
-            int selectedSortOption = binding.radioGroupSort.getCheckedRadioButtonId();
-            if (selectedSortOption != -1) {
-                sharedPreferences.edit().putInt(preference.getKey(), selectedSortOption).apply();
-                updateSettingsUseCase.updateSortBy(selectedSortOption == R.id.rb_release_date ? "release_date" : "rating").subscribe();
-                updatePreferenceSummary(preference);
-                refreshMovieList();
-            }
-            dialog.dismiss();
-        });
+        binding.setViewModel(settingsViewModel);
+        binding.setDialog(dialog);
+        binding.setLifecycleOwner(this);
     }
 
     private void updatePreferenceSummary(Preference preference) {
@@ -232,35 +162,19 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         String key = preference.getKey();
         switch (key) {
             case "category":
-                preference.setSummary(sharedPreferences.getString(key, "Popular Movies"));
+                preference.setSummary(settingsViewModel.getCategory().getValue());
                 break;
             case "rate":
-                preference.setSummary(String.valueOf(sharedPreferences.getInt(key, 5)));
+                preference.setSummary(String.valueOf(settingsViewModel.getRating().getValue()));
                 break;
             case "release_year":
-                preference.setSummary(sharedPreferences.getString(key, "2015"));
+                preference.setSummary(String.valueOf(settingsViewModel.getReleaseYear().getValue()));
                 break;
             case "sort_by":
-                int sortOption = sharedPreferences.getInt(key, R.id.rb_release_date);
-                preference.setSummary(sortOption == R.id.rb_release_date ? "Release Date" : "Rating");
+                String sortBy = settingsViewModel.getSortBy().getValue();
+                preference.setSummary(sortBy != null && sortBy.equals("release_date") ? "Release Date" : "Rating");
                 break;
         }
-    }
-
-    private void resetSettings() {
-        sharedPreferences.edit()
-                .putString("category", "Popular Movies")
-                .putInt("rate", 5)
-                .putString("release_year", "2015")
-                .putInt("sort_by", R.id.rb_release_date)
-                .apply();
-
-        updateSettingsUseCase.resetSettings().subscribe();
-        updatePreferenceSummary(findPreference("category"));
-        updatePreferenceSummary(findPreference("rate"));
-        updatePreferenceSummary(findPreference("release_year"));
-        updatePreferenceSummary(findPreference("sort_by"));
-        refreshMovieList();
     }
 
     private void refreshMovieList() {
