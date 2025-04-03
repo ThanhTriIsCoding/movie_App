@@ -20,31 +20,27 @@ import dagger.hilt.android.AndroidEntryPoint;
 @AndroidEntryPoint
 public class AboutFragment extends Fragment {
 
-    private WebView webView;
+    private FragmentAboutBinding binding;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_about, container, false);
+        binding = FragmentAboutBinding.inflate(inflater, container, false);
 
-        webView = view.findViewById(R.id.webView);
 
-        // Cấu hình WebView
-        WebSettings webSettings = webView.getSettings();
+        WebSettings webSettings = binding.webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setUseWideViewPort(true);
 
-        // Giả lập WebView như trình duyệt trên điện thoại
         webSettings.setUserAgentString("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Mobile Safari/537.36");
 
-        // Đảm bảo trang web mở trong WebView thay vì trình duyệt ngoài
-        webView.setWebViewClient(new WebViewClient());
+        binding.webView.setWebViewClient(new WebViewClient());
 
         // Tải URL
-        webView.loadUrl("https://www.themoviedb.org/about/our-history");
+        binding.webView.loadUrl("https://www.themoviedb.org/about/our-history");
 
-        return view;
+        return binding.getRoot();
     }
 }

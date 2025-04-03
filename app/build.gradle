@@ -5,7 +5,6 @@ plugins {
     id 'com.google.gms.google-services'
     id 'com.google.dagger.hilt.android'
     id 'kotlin-kapt'
-
 }
 
 android {
@@ -41,6 +40,7 @@ android {
         viewBinding true
     }
 }
+
 dependencies {
     implementation libs.androidx.core.ktx
     implementation libs.androidx.lifecycle.runtime.ktx
@@ -79,7 +79,7 @@ dependencies {
     implementation "androidx.room:room-runtime:2.6.1"
     implementation "androidx.room:room-ktx:2.6.1"
     implementation "androidx.room:room-rxjava3:2.6.1"
-    annotationProcessor  "androidx.room:room-compiler:2.6.1"
+    kapt "androidx.room:room-compiler:2.6.1" // Changed from annotationProcessor to kapt
 
     // Retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
@@ -96,13 +96,18 @@ dependencies {
 
     // Dagger
     implementation "com.google.dagger:dagger:2.52"
-    annotationProcessor  "com.google.dagger:dagger-compiler:2.52"
+    kapt "com.google.dagger:dagger-compiler:2.52" // Already using kapt for Dagger, which is correct
 
     // Picasso
     implementation 'com.squareup.picasso:picasso:2.8'
 
-    //Hilt
+    // Add javax.inject for @Named annotation
+    implementation 'javax.inject:javax.inject:1'
+
+    // Hilt
     implementation "com.google.dagger:hilt-android:2.51.1"
     kapt "com.google.dagger:hilt-compiler:2.51.1"
 
+    // Add kotlinx-coroutines-rx3 for Flow to Flowable conversion
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.8.1"
 }

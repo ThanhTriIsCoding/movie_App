@@ -3,14 +3,14 @@ package com.example.ojt_aada_mockproject1_trint28.domain.model;
 import java.util.Objects;
 
 public class Movie {
-    private final int id;
-    private final String title;
-    private final String overview;
-    private final String releaseDate;
-    private final double voteAverage;
-    private final boolean adult;
-    private final String posterUrl;
-    private final boolean isLiked;
+    private  int id;
+    private  String title;
+    private  String overview;
+    private  String releaseDate;
+    private  double voteAverage;
+    private  boolean adult;
+    private  String posterUrl;
+    private  boolean isLiked;
 
     public Movie(int id, String title, String overview, String releaseDate, double voteAverage, boolean adult, String posterUrl, boolean isLiked) {
         this.id = id;
@@ -51,8 +51,40 @@ public class Movie {
         return posterUrl;
     }
 
-    public boolean isLiked() { // New getter
+    public boolean isLiked() {
         return isLiked;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setOverview(String overview) {
+        this.overview = overview;
+    }
+
+    public void setReleaseDate(String releaseDate) {
+        this.releaseDate = releaseDate;
+    }
+
+    public void setVoteAverage(double voteAverage) {
+        this.voteAverage = voteAverage;
+    }
+
+    public void setAdult(boolean adult) {
+        this.adult = adult;
+    }
+
+    public void setPosterUrl(String posterUrl) {
+        this.posterUrl = posterUrl;
+    }
+
+    public void setLiked(boolean liked) {
+        isLiked = liked;
     }
 
     @Override

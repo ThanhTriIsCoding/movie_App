@@ -18,6 +18,7 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ActivityMainBinding;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.UpdateSettingsUseCase;
+import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 
@@ -81,7 +82,10 @@ public class MainActivity extends AppCompatActivity {
                         navController.navigate(R.id.movieListFragment);
                         break;
                     case 1:
-                        navController.navigate(R.id.favoriteFragment);
+                        // Navigate to MovieListFragment with "favorite" mode
+                        Bundle args = new Bundle();
+                        args.putString("mode", MovieListFragment.MODE_FAVORITE);
+                        navController.navigate(R.id.movieListFragment, args);
                         break;
                     case 2:
                         navController.navigate(R.id.settingsFragment);
@@ -113,12 +117,15 @@ public class MainActivity extends AppCompatActivity {
         // Cập nhật tiêu đề ActionBar
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             if (destination.getId() == R.id.movieListFragment) {
-                String currentMovieType = viewModel.getMovieType().getValue();
-                if (currentMovieType != null) {
-                    getSupportActionBar().setTitle(currentMovieType.replace("_", " ").toUpperCase());
+                String mode = arguments != null ? arguments.getString("mode", MovieListFragment.MODE_API) : MovieListFragment.MODE_API;
+                if (mode.equals(MovieListFragment.MODE_API)) {
+                    String currentMovieType = viewModel.getMovieType().getValue();
+                    if (currentMovieType != null) {
+                        getSupportActionBar().setTitle(currentMovieType.replace("_", " ").toUpperCase());
+                    }
+                } else if (mode.equals(MovieListFragment.MODE_FAVORITE)) {
+                    getSupportActionBar().setTitle("Favourite");
                 }
-            } else if (destination.getId() == R.id.favoriteFragment) {
-                getSupportActionBar().setTitle("Favourite");
             } else if (destination.getId() == R.id.settingsFragment) {
                 getSupportActionBar().setTitle("Settings");
             } else if (destination.getId() == R.id.aboutFragment) {

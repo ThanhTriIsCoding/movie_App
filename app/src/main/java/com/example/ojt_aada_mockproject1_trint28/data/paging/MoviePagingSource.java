@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.paging.PagingState;
 import androidx.paging.rxjava3.RxPagingSource;
 
+import com.example.ojt_aada_mockproject1_trint28.data.local.dao.MovieDao;
 import com.example.ojt_aada_mockproject1_trint28.data.remote.api.ApiService;
 import com.example.ojt_aada_mockproject1_trint28.data.remote.model.MovieListResponse;
 import com.example.ojt_aada_mockproject1_trint28.data.remote.model.MovieResponse;
@@ -24,14 +25,16 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
     private final String apiKey;
     private final String movieType;
     private final Settings settings;
+    private final MovieDao movieDao;
     private String imageBaseUrl = "https://image.tmdb.org/t/p/";
     private String posterSize = "w500";
 
-    public MoviePagingSource(ApiService apiService, String apiKey, String movieType, Settings settings, String imageBaseUrl, String posterSize) {
+    public MoviePagingSource(ApiService apiService, String apiKey, String movieType, Settings settings, String imageBaseUrl, String posterSize, MovieDao movieDao) {
         this.apiService = apiService;
         this.apiKey = apiKey;
         this.movieType = movieType;
         this.settings = settings;
+        this.movieDao = movieDao;
         this.imageBaseUrl = imageBaseUrl != null ? imageBaseUrl : this.imageBaseUrl;
         this.posterSize = posterSize != null ? posterSize : this.posterSize;
     }
@@ -40,6 +43,7 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
     @Override
     public Single<LoadResult<Integer, Movie>> loadSingle(@NonNull LoadParams<Integer> params) {
         int page = params.getKey() != null ? params.getKey() : 1;
+        int userId = 1; // Default userId
 
         Single<MovieListResponse> request;
         switch (movieType) {
@@ -60,9 +64,34 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
 
         return request
                 .subscribeOn(Schedulers.io())
-                .map(response -> {
-                    List<Movie> movies = response.getResults().stream()
-                            .map(this::mapToDomain)
+                .flatMap(response -> {
+                    List<Single<Movie>> movieSingles = response.getResults().stream()
+                            .map(movieResponse -> {
+                                Movie movie = mapToDomain(movieResponse);
+                                return movieDao.isMovieLiked(movie.getId(), userId)
+                                        .map(count -> new Movie(
+                                                movie.getId(),
+                                                movie.getTitle(),
+                                                movie.getOverview(),
+                                                movie.getReleaseDate(),
+                                                movie.getVoteAverage(),
+                                                movie.isAdult(),
+                                                movie.getPosterUrl(),
+                                                count > 0
+                                        ));
+                            })
+                            .collect(Collectors.toList());
+
+                    return Single.zip(movieSingles, objects -> {
+                        List<Movie> movies = new java.util.ArrayList<>();
+                        for (Object obj : objects) {
+                            movies.add((Movie) obj);
+                        }
+                        return movies;
+                    });
+                })
+                .map(movies -> {
+                    List<Movie> filteredMovies = movies.stream()
                             .filter(movie -> {
                                 boolean matchesRating = movie.getVoteAverage() >= settings.getMinRating();
                                 boolean matchesYear = true; // Default to true if release date is invalid
@@ -73,7 +102,6 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
                                         matchesYear = year >= settings.getReleaseYear();
                                     }
                                 } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-                                    // If parsing fails, exclude the movie
                                     matchesYear = false;
                                 }
                                 return matchesRating && matchesYear;
@@ -83,9 +111,9 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
                                     Comparator.comparing(Movie::getReleaseDate, Comparator.nullsLast(String::compareTo)).reversed())
                             .collect(Collectors.toList());
 
-                    Integer nextKey = (page < response.getTotalPages()) ? page + 1 : null;
+                    Integer nextKey = (page < filteredMovies.size()) ? page + 1 : null;
                     return (LoadResult<Integer, Movie>) new LoadResult.Page<>(
-                            movies,
+                            filteredMovies,
                             page == 1 ? null : page - 1, // prevKey
                             nextKey // nextKey
                     );
@@ -105,7 +133,7 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
                 response.getVoteAverage(),
                 response.isAdult(),
                 posterUrl,
-                false
+                false // Default isLiked to false, will be updated by database check
         );
     }
 

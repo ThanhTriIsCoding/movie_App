@@ -7,6 +7,9 @@
         <variable
             name="movie"
             type="com.example.ojt_aada_mockproject1_trint28.domain.model.Movie" />
+        <variable
+            name="starClickListener"
+            type="android.view.View.OnClickListener" />
     </data>
 
     <androidx.cardview.widget.CardView
@@ -127,7 +130,8 @@
                                 android:layout_marginStart="8dp"
                                 android:src="@{movie.isLiked ? @drawable/icons8_star_48 : @drawable/icons8_star_50}"
                                 android:clickable="true"
-                                android:focusable="true"/>
+                                android:focusable="true"
+                                android:onClick="@{starClickListener}"/>
                         </LinearLayout>
                     </LinearLayout>
 

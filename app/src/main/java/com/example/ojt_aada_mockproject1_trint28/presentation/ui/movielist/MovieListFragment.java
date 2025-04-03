@@ -1,6 +1,7 @@
 package com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,23 +17,48 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentMovieListBinding;
+import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.presentation.adapter.MovieAdapter;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.main.MainViewModel;
 
 import dagger.hilt.android.AndroidEntryPoint;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @AndroidEntryPoint
 public class MovieListFragment extends Fragment {
+
+    private static final String ARG_MODE = "mode";
+    public static final String MODE_API = "api";
+    public static final String MODE_FAVORITE = "favorite";
 
     private FragmentMovieListBinding binding;
     private MovieListViewModel viewModel;
     private MainViewModel mainViewModel;
     private MovieAdapter adapter;
     private final CompositeDisposable disposables = new CompositeDisposable();
-    private String lastMovieType; // Track the last loaded movie type
-    private boolean isGridMode; // Track the current layout mode
+    private String lastMovieType;
+    private boolean isGridMode;
+    private String mode;
+
+    public static MovieListFragment newInstance(String mode) {
+        MovieListFragment fragment = new MovieListFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_MODE, mode);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            mode = getArguments().getString(ARG_MODE, MODE_API);
+        } else {
+            mode = MODE_API;
+        }
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -44,38 +70,80 @@ public class MovieListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Khởi tạo ViewModel (Hilt sẽ tự động inject)
         viewModel = new ViewModelProvider(this).get(MovieListViewModel.class);
-
-        // Khởi tạo MainViewModel để quan sát movieType
         mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
 
-        // Khởi tạo Adapter
         isGridMode = mainViewModel.getIsGridMode().getValue() != null && mainViewModel.getIsGridMode().getValue();
-        adapter = new MovieAdapter(isGridMode);
+        Log.d("MovieListFragment", "isGridMode: " + isGridMode);
+        adapter = new MovieAdapter(isGridMode, (movie, position) -> {
+            Log.d("MovieAdapter", "Star clicked for movie: " + movie.getTitle() + " at position: " + position);
+            if (!isGridMode) {
+                // Check the current isLiked state in the database before proceeding
+                disposables.add(
+                        viewModel.isMovieLiked(movie.getId())
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(isLiked -> {
+                                    if (isLiked) {
+                                        disposables.add(
+                                                viewModel.removeFavoriteMovie(movie)
+                                                        .subscribeOn(Schedulers.io())
+                                                        .observeOn(AndroidSchedulers.mainThread())
+                                                        .subscribe(() -> {
+                                                            Log.d("MovieListFragment", "Movie removed from favorites: " + movie.getTitle());
+                                                            movie.setLiked(false); // Update the isLiked state
+                                                            adapter.notifyItemChanged(position, "isLiked");
+                                                            if (mode.equals(MODE_FAVORITE)) {
+                                                                viewModel.loadFavoriteMovies();
+                                                            }
+                                                        }, throwable -> {
+                                                            Log.e("MovieListFragment", "Error removing movie: " + throwable.getMessage());
+                                                        })
+                                        );
+                                    } else {
+                                        disposables.add(
+                                                viewModel.addFavoriteMovie(movie)
+                                                        .subscribeOn(Schedulers.io())
+                                                        .observeOn(AndroidSchedulers.mainThread())
+                                                        .subscribe(() -> {
+                                                            Log.d("MovieListFragment", "Movie added to favorites: " + movie.getTitle());
+                                                            movie.setLiked(true); // Update the isLiked state
+                                                            adapter.notifyItemChanged(position, "isLiked");
+                                                            if (mode.equals(MODE_FAVORITE)) {
+                                                                viewModel.loadFavoriteMovies();
+                                                            }
+                                                        }, throwable -> {
+                                                            Log.e("MovieListFragment", "Error adding movie: " + throwable.getMessage());
+                                                        })
+                                        );
+                                    }
+                                }, throwable -> {
+                                    Log.e("MovieListFragment", "Error checking isLiked: " + throwable.getMessage());
+                                })
+                );
+            }
+        });
         binding.recyclerView.setAdapter(adapter);
-        binding.recyclerView.setHasFixedSize(true); // Improve performance
-        switchLayoutManager(isGridMode); // Set initial layout manager
+        binding.recyclerView.setHasFixedSize(true);
+        switchLayoutManager(isGridMode);
 
-        // Set up SwipeRefreshLayout
         binding.swipeRefreshLayout.setOnRefreshListener(() -> {
-            if (lastMovieType != null) {
-                loadMovies(lastMovieType); // Reload movies for the current movie type
+            if (mode.equals(MODE_API) && lastMovieType != null) {
+                loadMovies(lastMovieType);
+            } else if (mode.equals(MODE_FAVORITE)) {
+                viewModel.loadFavoriteMovies();
+                binding.swipeRefreshLayout.setRefreshing(false);
             }
         });
 
-        // Quan sát chế độ List/Grid từ MainViewModel
         mainViewModel.getIsGridMode().observe(getViewLifecycleOwner(), newGridMode -> {
-            // Save the current scroll position
             int firstVisiblePosition = getFirstVisibleItemPosition();
             viewModel.setScrollPosition(firstVisiblePosition);
 
-            // Update the layout mode and adapter
             isGridMode = newGridMode;
             switchLayoutManager(isGridMode);
             adapter.setGridMode(isGridMode);
 
-            // Restore the scroll position after layout change
             binding.recyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
                 @Override
                 public void onLayoutChange(View v, int left, int top, int right, int bottom,
@@ -88,14 +156,22 @@ public class MovieListFragment extends Fragment {
             });
         });
 
-        // Quan sát movieType từ MainViewModel
-        mainViewModel.getMovieType().observe(getViewLifecycleOwner(), movieType -> {
-            if (movieType != null) {
-                loadMovies(movieType);
-            }
-        });
+        if (mode.equals(MODE_API)) {
+            mainViewModel.getMovieType().observe(getViewLifecycleOwner(), movieType -> {
+                if (movieType != null) {
+                    loadMovies(movieType);
+                }
+            });
+        } else if (mode.equals(MODE_FAVORITE)) {
+            viewModel.loadFavoriteMovies();
+            viewModel.getFavoriteMoviesLiveData().observe(getViewLifecycleOwner(), movies -> {
+                Log.d("MovieListFragment", "Favorite movies received: " + (movies != null ? movies.size() : "null"));
+                if (movies != null) {
+                    adapter.submitData(getViewLifecycleOwner().getLifecycle(), PagingData.from(movies));
+                }
+            });
+        }
 
-        // Add a scroll listener to save the scroll position
         binding.recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -107,46 +183,38 @@ public class MovieListFragment extends Fragment {
             }
         });
 
-        // Monitor the adapter's load state to restore the scroll position
         adapter.addLoadStateListener(loadStates -> {
-            // Check if the initial data load is complete (not loading and no errors)
             if (loadStates.getRefresh() instanceof LoadState.NotLoading &&
                     loadStates.getAppend() instanceof LoadState.NotLoading &&
                     loadStates.getPrepend() instanceof LoadState.NotLoading) {
                 Integer savedPosition = viewModel.getScrollPosition().getValue();
                 if (savedPosition != null && savedPosition > 0) {
-                    // Add a layout change listener to ensure the scroll happens after layout
                     binding.recyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
                         @Override
                         public void onLayoutChange(View v, int left, int top, int right, int bottom,
                                                    int oldLeft, int oldTop, int oldRight, int oldBottom) {
                             binding.recyclerView.removeOnLayoutChangeListener(this);
-                            // Ensure the adapter has enough items to scroll to the saved position
                             if (adapter.getItemCount() > savedPosition) {
                                 binding.recyclerView.scrollToPosition(savedPosition);
                             } else {
-                                // If the adapter doesn't have enough items yet, scroll to the last item to trigger more data loading
                                 binding.recyclerView.scrollToPosition(adapter.getItemCount() - 1);
                             }
                         }
                     });
                 }
             }
-            return null; // Explicit return statement for void lambda
+            return null;
         });
     }
 
     private void loadMovies(String movieType) {
-        // Check if the movie type has changed
         boolean shouldResetPosition = lastMovieType == null || !lastMovieType.equals(movieType);
-        lastMovieType = movieType; // Update the last movie type
+        lastMovieType = movieType;
 
-        // If the movie type has changed, reset the scroll position
         if (shouldResetPosition) {
-            viewModel.setScrollPosition(0); // Reset scroll position when movie type changes
+            viewModel.setScrollPosition(0);
         }
 
-        // Show the refresh indicator if this is a pull-to-refresh action
         if (binding.swipeRefreshLayout.isRefreshing()) {
             binding.swipeRefreshLayout.setRefreshing(true);
         }
@@ -157,13 +225,10 @@ public class MovieListFragment extends Fragment {
                         .subscribe(
                                 pagingData -> {
                                     adapter.submitData(getViewLifecycleOwner().getLifecycle(), pagingData);
-                                    // Hide the refresh indicator after data is submitted
                                     binding.swipeRefreshLayout.setRefreshing(false);
                                 },
                                 throwable -> {
-                                    // Hide the refresh indicator on error
                                     binding.swipeRefreshLayout.setRefreshing(false);
-                                    // Xử lý lỗi nếu cần
                                     binding.textView.setText("Error loading movies: " + throwable.getMessage());
                                     binding.textView.setVisibility(View.VISIBLE);
                                     binding.recyclerView.setVisibility(View.GONE);

@@ -13,16 +13,24 @@ import com.example.ojt_aada_mockproject1_trint28.databinding.ItemMovieBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ItemMovieGridBinding;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 
+import java.util.List;
+
 public class MovieAdapter extends PagingDataAdapter<Movie, RecyclerView.ViewHolder> {
 
     private static final int VIEW_TYPE_LIST = 1;
     private static final int VIEW_TYPE_GRID = 2;
 
     private boolean isGridMode;
+    private final OnStarClickListener starClickListener;
 
-    public MovieAdapter(boolean isGridMode) {
+    public interface OnStarClickListener {
+        void onStarClick(Movie movie, int position);
+    }
+
+    public MovieAdapter(boolean isGridMode, OnStarClickListener starClickListener) {
         super(DIFF_CALLBACK);
         this.isGridMode = isGridMode;
+        this.starClickListener = starClickListener;
     }
 
     public void setGridMode(boolean isGridMode) {
@@ -52,14 +60,32 @@ public class MovieAdapter extends PagingDataAdapter<Movie, RecyclerView.ViewHold
         Movie movie = getItem(position);
         if (movie != null) {
             if (holder instanceof ListViewHolder) {
-                ((ListViewHolder) holder).bind(movie);
+                ((ListViewHolder) holder).bind(movie, position);
             } else if (holder instanceof GridViewHolder) {
                 ((GridViewHolder) holder).bind(movie);
             }
         }
     }
 
-    static class ListViewHolder extends RecyclerView.ViewHolder {
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (payloads.isEmpty()) {
+            onBindViewHolder(holder, position);
+        } else {
+            Movie movie = getItem(position);
+            if (movie != null && holder instanceof ListViewHolder) {
+                ItemMovieBinding binding = ((ListViewHolder) holder).binding;
+                for (Object payload : payloads) {
+                    if ("isLiked".equals(payload)) {
+                        binding.setMovie(movie); // Update the isLiked state
+                        binding.executePendingBindings();
+                    }
+                }
+            }
+        }
+    }
+
+    class ListViewHolder extends RecyclerView.ViewHolder {
         private final ItemMovieBinding binding;
 
         ListViewHolder(ItemMovieBinding binding) {
@@ -67,13 +93,14 @@ public class MovieAdapter extends PagingDataAdapter<Movie, RecyclerView.ViewHold
             this.binding = binding;
         }
 
-        void bind(Movie movie) {
+        void bind(Movie movie, int position) {
             binding.setMovie(movie);
+            binding.setStarClickListener((view) -> starClickListener.onStarClick(movie, position));
             binding.executePendingBindings();
         }
     }
 
-    static class GridViewHolder extends RecyclerView.ViewHolder {
+    class GridViewHolder extends RecyclerView.ViewHolder {
         private final ItemMovieGridBinding binding;
 
         GridViewHolder(ItemMovieGridBinding binding) {

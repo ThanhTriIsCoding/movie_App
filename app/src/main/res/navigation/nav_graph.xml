@@ -4,17 +4,17 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/movieListFragment">
 
-    <!-- Movies Tab -->
+    <!-- Movies / Favourite Tab -->
     <fragment
         android:id="@+id/movieListFragment"
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment"
-        android:label="Movies" />
+        android:label="Movie List">
+        <argument
+            android:name="mode"
+            app:argType="string"
+            android:defaultValue="api" />
+    </fragment>
 
-    <!-- Favourite Tab -->
-    <fragment
-        android:id="@+id/favoriteFragment"
-        android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFavouriteFragment"
-        android:label="Favourite" />
 
     <!-- Settings Tab -->
     <fragment
