@@ -2,6 +2,8 @@ package com.example.ojt_aada_mockproject1_trint28.domain.repository;
 
 import androidx.paging.PagingData;
 
+import com.example.ojt_aada_mockproject1_trint28.data.remote.model.MovieDetailResponse;
+import com.example.ojt_aada_mockproject1_trint28.domain.model.CastCrew;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 
 import java.util.List;
@@ -16,4 +18,6 @@ public interface IMovieRepository {
     Completable addFavoriteMovie(Movie movie, int userId);
     Completable removeFavoriteMovie(Movie movie, int userId);
     Single<Boolean> isMovieLiked(int movieId, int userId);
+    Single<MovieDetailResponse> getMovieDetails(int movieId, String apiKey);
+    Flowable<PagingData<CastCrew>> getCastCrew(int movieId, String apiKey);
 }

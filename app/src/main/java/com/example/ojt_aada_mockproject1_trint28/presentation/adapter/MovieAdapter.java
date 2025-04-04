@@ -22,15 +22,21 @@ public class MovieAdapter extends PagingDataAdapter<Movie, RecyclerView.ViewHold
 
     private boolean isGridMode;
     private final OnStarClickListener starClickListener;
+    private final OnItemClickListener itemClickListener;
 
     public interface OnStarClickListener {
         void onStarClick(Movie movie, int position);
     }
 
-    public MovieAdapter(boolean isGridMode, OnStarClickListener starClickListener) {
+    public interface OnItemClickListener {
+        void onItemClick(Movie movie);
+    }
+
+    public MovieAdapter(boolean isGridMode, OnStarClickListener starClickListener, OnItemClickListener itemClickListener) {
         super(DIFF_CALLBACK);
         this.isGridMode = isGridMode;
         this.starClickListener = starClickListener;
+        this.itemClickListener = itemClickListener;
     }
 
     public void setGridMode(boolean isGridMode) {
@@ -91,6 +97,17 @@ public class MovieAdapter extends PagingDataAdapter<Movie, RecyclerView.ViewHold
         ListViewHolder(ItemMovieBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+
+            // Set click listener for the entire item (excluding the star)
+            binding.getRoot().setOnClickListener(v -> {
+                int position = getAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    Movie movie = getItem(position);
+                    if (movie != null) {
+                        itemClickListener.onItemClick(movie);
+                    }
+                }
+            });
         }
 
         void bind(Movie movie, int position) {
@@ -106,6 +123,17 @@ public class MovieAdapter extends PagingDataAdapter<Movie, RecyclerView.ViewHold
         GridViewHolder(ItemMovieGridBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+
+            // Set click listener for the entire item
+            binding.getRoot().setOnClickListener(v -> {
+                int position = getAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    Movie movie = getItem(position);
+                    if (movie != null) {
+                        itemClickListener.onItemClick(movie);
+                    }
+                }
+            });
         }
 
         void bind(Movie movie) {

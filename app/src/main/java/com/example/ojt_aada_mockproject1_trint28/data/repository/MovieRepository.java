@@ -9,8 +9,11 @@ import androidx.paging.rxjava3.PagingRx;
 
 import com.example.ojt_aada_mockproject1_trint28.data.local.dao.MovieDao;
 import com.example.ojt_aada_mockproject1_trint28.data.local.entity.MovieEntity;
+import com.example.ojt_aada_mockproject1_trint28.data.paging.CastCrewPagingSource;
 import com.example.ojt_aada_mockproject1_trint28.data.paging.MoviePagingSource;
 import com.example.ojt_aada_mockproject1_trint28.data.remote.api.ApiService;
+import com.example.ojt_aada_mockproject1_trint28.data.remote.model.MovieDetailResponse;
+import com.example.ojt_aada_mockproject1_trint28.domain.model.CastCrew;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Settings;
 import com.example.ojt_aada_mockproject1_trint28.domain.repository.IMovieRepository;
@@ -30,6 +33,7 @@ public class MovieRepository implements IMovieRepository {
     private final String apiKey;
     private String imageBaseUrl = "https://image.tmdb.org/t/p/";
     private String posterSize = "w500";
+    private String profileSize = "w185";
 
     public MovieRepository(ApiService apiService, UpdateSettingsUseCase updateSettingsUseCase, String apiKey, MovieDao movieDao) {
         this.apiService = apiService;
@@ -55,7 +59,24 @@ public class MovieRepository implements IMovieRepository {
                 });
     }
 
+    @Override
+    public Flowable<PagingData<CastCrew>> getCastCrew(int movieId, String apiKey) {
+        CastCrewPagingSource pagingSource = new CastCrewPagingSource(apiService, movieId, apiKey, imageBaseUrl, profileSize);
+        Pager<Integer, CastCrew> pager = new Pager<>(
+                new PagingConfig(
+                        10, // Page size for cast & crew
+                        5,  // Prefetch distance
+                        false // Enable placeholders
+                ),
+                () -> pagingSource
+        );
+        return PagingRx.getFlowable(pager);
+    }
 
+    @Override
+    public Single<MovieDetailResponse> getMovieDetails(int movieId, String apiKey) {
+        return apiService.getMovieDetails(movieId, apiKey);
+    }
 
     @Override
     public Flowable<List<Movie>> getFavoriteMovies(int userId) {

@@ -10,12 +10,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.paging.LoadState;
 import androidx.paging.PagingData;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentMovieListBinding;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.presentation.adapter.MovieAdapter;
@@ -41,6 +44,7 @@ public class MovieListFragment extends Fragment {
     private String lastMovieType;
     private boolean isGridMode;
     private String mode;
+    private NavController navController;
 
     public static MovieListFragment newInstance(String mode) {
         MovieListFragment fragment = new MovieListFragment();
@@ -70,11 +74,15 @@ public class MovieListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        navController = Navigation.findNavController(view);
+
         viewModel = new ViewModelProvider(this).get(MovieListViewModel.class);
         mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
 
         isGridMode = mainViewModel.getIsGridMode().getValue() != null && mainViewModel.getIsGridMode().getValue();
         Log.d("MovieListFragment", "isGridMode: " + isGridMode);
+
+        // Initialize the adapter with both star click and item click listeners
         adapter = new MovieAdapter(isGridMode, (movie, position) -> {
             Log.d("MovieAdapter", "Star clicked for movie: " + movie.getTitle() + " at position: " + position);
             if (!isGridMode) {
@@ -122,7 +130,13 @@ public class MovieListFragment extends Fragment {
                                 })
                 );
             }
+        }, movie -> {
+            // Handle item click to navigate to MovieDetailFragment
+            Bundle bundle = new Bundle();
+            bundle.putSerializable("movie", movie);
+            navController.navigate(R.id.action_movieListFragment_to_movieDetailFragment, bundle);
         });
+
         binding.recyclerView.setAdapter(adapter);
         binding.recyclerView.setHasFixedSize(true);
         switchLayoutManager(isGridMode);

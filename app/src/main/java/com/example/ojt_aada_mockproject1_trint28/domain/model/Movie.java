@@ -1,8 +1,9 @@
 package com.example.ojt_aada_mockproject1_trint28.domain.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Movie {
+public class Movie implements Serializable {
     private  int id;
     private  String title;
     private  String overview;

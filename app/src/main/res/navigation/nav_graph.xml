@@ -13,6 +13,9 @@
             android:name="mode"
             app:argType="string"
             android:defaultValue="api" />
+        <action
+            android:id="@+id/action_movieListFragment_to_movieDetailFragment"
+            app:destination="@id/movieDetailsFragment" />
     </fragment>
 
 

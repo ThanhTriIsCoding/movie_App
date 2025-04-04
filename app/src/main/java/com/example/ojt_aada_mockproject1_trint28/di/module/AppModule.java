@@ -15,7 +15,9 @@ import com.example.ojt_aada_mockproject1_trint28.data.repository.SettingsReposit
 import com.example.ojt_aada_mockproject1_trint28.domain.repository.IMovieRepository;
 import com.example.ojt_aada_mockproject1_trint28.domain.repository.SettingsRepository;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.AddFavoriteMovieUseCase;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetCastCrewUseCase;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetFavoriteMoviesUseCase;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetMovieDetailsUseCase;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetMoviesUseCase;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.IsMovieLikedUseCase;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.RemoveFavoriteMovieUseCase;
@@ -74,11 +76,22 @@ public class AppModule {
         return movieRepository;
     }
 
-
     @Provides
     @Singleton
     GetMoviesUseCase provideGetMoviesUseCase(IMovieRepository movieRepository) {
         return new GetMoviesUseCase(movieRepository);
+    }
+
+    @Provides
+    @Singleton
+    GetMovieDetailsUseCase provideGetMovieDetailsUseCase(IMovieRepository movieRepository) {
+        return new GetMovieDetailsUseCase(movieRepository);
+    }
+
+    @Provides
+    @Singleton
+    GetCastCrewUseCase provideGetCastCrewUseCase(IMovieRepository movieRepository) {
+        return new GetCastCrewUseCase(movieRepository);
     }
 
     @Provides
