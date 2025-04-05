@@ -1,10 +1,16 @@
 package com.example.ojt_aada_mockproject1_trint28.presentation.ui.main;
 
+import android.Manifest;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
@@ -17,8 +23,11 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ActivityMainBinding;
+import com.example.ojt_aada_mockproject1_trint28.databinding.NavHeaderBinding;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.UpdateSettingsUseCase;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment;
+import com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.EditProfileActivity;
+import com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.ProfileViewModel;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 
@@ -31,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
     private MainViewModel viewModel;
+    private ProfileViewModel profileViewModel;
     private NavController navController;
 
     @Inject
@@ -39,16 +49,56 @@ public class MainActivity extends AppCompatActivity {
     @Inject
     UpdateSettingsUseCase updateSettingsUseCase;
 
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (!isGranted) {
+                    // Permission denied, handle accordingly
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Request notification permission for Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+        }
+
         // Thiết lập ViewModel
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
+        profileViewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
         binding.setViewModel(viewModel);
         binding.setLifecycleOwner(this);
+
+        // Bind ProfileViewModel to Navigation Drawer Header
+        NavigationView navigationView = binding.navView;
+        NavHeaderBinding headerBinding = NavHeaderBinding.bind(navigationView.getHeaderView(0));
+        headerBinding.setViewModel(profileViewModel);
+        headerBinding.setLifecycleOwner(this);
+
+        // Add logging to confirm LiveData updates
+        profileViewModel.reminders.observe(this, reminders -> {
+            Log.d("MainActivity", "ProfileViewModel reminders updated: " + reminders.size() + " reminders");
+        });
+
+        // Observe navigation events from ProfileViewModel
+        profileViewModel.navigateToEditProfile.observe(this, shouldNavigate -> {
+            if (Boolean.TRUE.equals(shouldNavigate)) {
+                Intent intent = new Intent(this, EditProfileActivity.class);
+                startActivity(intent);
+                profileViewModel.onNavigationHandled();
+            }
+        });
+
+        profileViewModel.navigateToShowAllReminders.observe(this, shouldNavigate -> {
+            if (Boolean.TRUE.equals(shouldNavigate)) {
+                navController.navigate(R.id.action_global_showAllRemindersFragment);
+                profileViewModel.onNavigationHandled();
+            }
+        });
 
         // Thiết lập Toolbar trước khi làm việc với Navigation Component
         setSupportActionBar(binding.toolbar);
@@ -67,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
         // Thiết lập Navigation Drawer
-        NavigationView navigationView = binding.navView;
         NavigationUI.setupWithNavController(navigationView, navController);
 
         // Thiết lập TabLayout
@@ -112,6 +161,13 @@ public class MainActivity extends AppCompatActivity {
                     // The onTabSelected listener will handle navigation to the correct fragment
                 }
             }
+        });
+
+        // In MainActivity, modify the observer
+        profileViewModel.reminders.observe(this, reminders -> {
+            Log.d("MainActivity", "ProfileViewModel reminders updated: " + reminders.size() + " reminders");
+            // Invalidate the NavigationView to force a redraw
+            binding.navView.invalidate();
         });
 
         // Cập nhật tiêu đề ActionBar

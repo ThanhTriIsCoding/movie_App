@@ -1,6 +1,13 @@
-package com.example.ojt_aada_mockproject1_trint28.domain.model;
+package com.example.ojt_aada_mockproject1_trint28.data.local.entity;
 
-public class Reminder {
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
+@Entity(tableName = "reminders")
+public class ReminderEntity {
+    @PrimaryKey(autoGenerate = true)
+    private int id;
+    private int userId;
     private int movieId;
     private String title;
     private String dateTime;
@@ -8,7 +15,8 @@ public class Reminder {
     private String releaseDate; // New field
     private double voteAverage; // New field
 
-    public Reminder(int movieId, String title, String dateTime, String posterUrl, String releaseDate, double voteAverage) {
+    public ReminderEntity(int userId, int movieId, String title, String dateTime, String posterUrl, String releaseDate, double voteAverage) {
+        this.userId = userId;
         this.movieId = movieId;
         this.title = title;
         this.dateTime = dateTime;
@@ -18,6 +26,22 @@ public class Reminder {
     }
 
     // Getters and setters
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
     public int getMovieId() {
         return movieId;
     }

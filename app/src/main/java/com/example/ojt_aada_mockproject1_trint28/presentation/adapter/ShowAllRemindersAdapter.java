@@ -1,27 +1,35 @@
 package com.example.ojt_aada_mockproject1_trint28.presentation.adapter;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ItemReminderBinding;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Reminder;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.ReminderViewHolder> {
+public class ShowAllRemindersAdapter extends RecyclerView.Adapter<ShowAllRemindersAdapter.ReminderViewHolder> {
 
     private List<Reminder> reminders = new ArrayList<>();
+    private OnDeleteClickListener deleteClickListener;
+
+    public interface OnDeleteClickListener {
+        void onDeleteClick(Reminder reminder);
+    }
+
+    public void setDeleteClickListener(OnDeleteClickListener listener) {
+        this.deleteClickListener = listener;
+    }
 
     public void setReminders(List<Reminder> reminders) {
-        // Only take the first 2 reminders
-        this.reminders.clear();
-        if (reminders != null) {
-            this.reminders.addAll(reminders.size() > 2 ? reminders.subList(0, 2) : reminders);
-        }
+        this.reminders = reminders != null ? reminders : new ArrayList<>();
         notifyDataSetChanged();
     }
 
@@ -35,7 +43,8 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.Remind
 
     @Override
     public void onBindViewHolder(@NonNull ReminderViewHolder holder, int position) {
-        holder.bind(reminders.get(position));
+        Reminder reminder = reminders.get(position);
+        holder.bind(reminder);
     }
 
     @Override
@@ -43,7 +52,7 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.Remind
         return reminders.size();
     }
 
-    static class ReminderViewHolder extends RecyclerView.ViewHolder {
+    class ReminderViewHolder extends RecyclerView.ViewHolder {
         private final ItemReminderBinding binding;
 
         ReminderViewHolder(ItemReminderBinding binding) {
@@ -53,6 +62,20 @@ public class ReminderAdapter extends RecyclerView.Adapter<ReminderAdapter.Remind
 
         void bind(Reminder reminder) {
             binding.setReminder(reminder);
+            binding.setShowPosterAndDelete(true);
+            binding.setDeleteClickListener(v -> {
+                if (deleteClickListener != null) {
+                    deleteClickListener.onDeleteClick(reminder);
+                }
+            });
+
+            // Load the poster image using Picasso
+            Picasso.get()
+                    .load(reminder.getPosterUrl())
+                    .placeholder(R.drawable.ic_launcher_background)
+                    .error(R.drawable.ic_launcher_background)
+                    .into(binding.reminderPoster);
+
             binding.executePendingBindings();
         }
     }

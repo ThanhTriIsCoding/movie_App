@@ -7,14 +7,18 @@ import androidx.preference.PreferenceManager;
 import androidx.room.Room;
 
 import com.example.ojt_aada_mockproject1_trint28.data.local.dao.MovieDao;
+import com.example.ojt_aada_mockproject1_trint28.data.local.dao.ReminderDao;
 import com.example.ojt_aada_mockproject1_trint28.data.local.database.AppDatabase;
 import com.example.ojt_aada_mockproject1_trint28.data.remote.api.ApiService;
 import com.example.ojt_aada_mockproject1_trint28.data.remote.api.RetrofitClient;
 import com.example.ojt_aada_mockproject1_trint28.data.repository.MovieRepository;
+import com.example.ojt_aada_mockproject1_trint28.data.repository.ProfileRepository;
+import com.example.ojt_aada_mockproject1_trint28.data.repository.ReminderRepository;
 import com.example.ojt_aada_mockproject1_trint28.data.repository.SettingsRepositoryImpl;
 import com.example.ojt_aada_mockproject1_trint28.domain.repository.IMovieRepository;
 import com.example.ojt_aada_mockproject1_trint28.domain.repository.SettingsRepository;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.AddFavoriteMovieUseCase;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.AddReminderUseCase;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetCastCrewUseCase;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetFavoriteMoviesUseCase;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetMovieDetailsUseCase;
@@ -72,8 +76,32 @@ public class AppModule {
 
     @Provides
     @Singleton
+    ProfileRepository provideProfileRepository() {
+        return new ProfileRepository();
+    }
+
+    @Provides
+    @Singleton
     IMovieRepository provideIMovieRepository(MovieRepository movieRepository) {
         return movieRepository;
+    }
+
+    @Provides
+    @Singleton
+    ReminderDao provideReminderDao(AppDatabase appDatabase) {
+        return appDatabase.reminderDao();
+    }
+
+    @Provides
+    @Singleton
+    ReminderRepository provideReminderRepository(ReminderDao reminderDao) {
+        return new ReminderRepository(reminderDao);
+    }
+
+    @Provides
+    @Singleton
+    AddReminderUseCase provideAddReminderUseCase(ReminderRepository reminderRepository) {
+        return new AddReminderUseCase(reminderRepository);
     }
 
     @Provides
