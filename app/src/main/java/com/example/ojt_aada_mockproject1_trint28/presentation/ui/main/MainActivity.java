@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private MovieListViewModel movieListViewModel;
     private NavController navController;
     private boolean shouldShowMoreIcon = false;
+    private Movie lastSelectedMovie;
 
     @Inject
     SharedPreferences sharedPreferences;
@@ -68,19 +69,16 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Request notification permission for Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
         }
 
-        // Set up ViewModel
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
         profileViewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
         movieListViewModel = new ViewModelProvider(this).get(MovieListViewModel.class);
         binding.setViewModel(viewModel);
         binding.setLifecycleOwner(this);
 
-        // Set up click listeners for toolbar icons
         binding.setOnGridClick(v -> viewModel.toggleDisplayMode());
         binding.setOnSearchClick(v -> {
             viewModel.setSearchViewVisible(true);
@@ -89,10 +87,8 @@ public class MainActivity extends AppCompatActivity {
         });
         binding.setOnCloseClick(v -> {
             viewModel.clearSearch();
-            // Tải lại danh sách phim yêu thích khi bấm nút "close"
             if (navController.getCurrentDestination() != null &&
                     navController.getCurrentDestination().getId() == R.id.movieListFragment) {
-                // Sử dụng getCurrentBackStackEntry().getArguments() để lấy Bundle
                 Bundle args = navController.getCurrentBackStackEntry().getArguments();
                 String mode = args != null ? args.getString("mode", MovieListFragment.MODE_API) : MovieListFragment.MODE_API;
                 if (mode.equals(MovieListFragment.MODE_FAVORITE)) {
@@ -101,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Theo dõi sự thay đổi của search_view
         binding.searchView.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -115,18 +110,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Bind ProfileViewModel to Navigation Drawer Header
         NavigationView navigationView = binding.navView;
         NavHeaderBinding headerBinding = NavHeaderBinding.bind(navigationView.getHeaderView(0));
         headerBinding.setViewModel(profileViewModel);
         headerBinding.setLifecycleOwner(this);
 
-        // Add logging to confirm LiveData updates
         profileViewModel.reminders.observe(this, reminders -> {
             Log.d("MainActivity", "ProfileViewModel reminders updated: " + reminders.size() + " reminders");
         });
 
-        // Observe navigation events from ProfileViewModel
         profileViewModel.navigateToEditProfile.observe(this, shouldNavigate -> {
             if (Boolean.TRUE.equals(shouldNavigate)) {
                 Intent intent = new Intent(this, EditProfileActivity.class);
@@ -142,13 +134,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Set up Toolbar
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
-        // Set up Navigation Component
         Fragment navHostFragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         if (navHostFragment instanceof NavHostFragment) {
             navController = ((NavHostFragment) navHostFragment).getNavController();
@@ -161,27 +151,31 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
-        // Set up Navigation Drawer
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        // Set up TabLayout
         binding.tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 viewModel.setSelectedTabPosition(tab.getPosition());
                 switch (tab.getPosition()) {
-                    case 0:
-                        navController.navigate(R.id.movieListFragment);
+                    case 0: // Tab Movies
+                        if (viewModel.getIsInMovieDetail().getValue() != null && viewModel.getIsInMovieDetail().getValue() && lastSelectedMovie != null) {
+                            Bundle args = new Bundle();
+                            args.putSerializable("movie", lastSelectedMovie);
+                            navController.navigate(R.id.movieDetailsFragment, args);
+                        } else {
+                            navController.navigate(R.id.movieListFragment);
+                        }
                         break;
-                    case 1:
+                    case 1: // Tab Favourite
                         Bundle args = new Bundle();
                         args.putString("mode", MovieListFragment.MODE_FAVORITE);
                         navController.navigate(R.id.movieListFragment, args);
                         break;
-                    case 2:
+                    case 2: // Tab Settings
                         navController.navigate(R.id.settingsFragment);
                         break;
-                    case 3:
+                    case 3: // Tab About
                         navController.navigate(R.id.aboutFragment);
                         break;
                 }
@@ -193,7 +187,6 @@ public class MainActivity extends AppCompatActivity {
             public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        // Observe the selected tab position from ViewModel to restore it
         viewModel.getSelectedTabPosition().observe(this, position -> {
             if (position != null) {
                 TabLayout.Tab tab = binding.tabLayout.getTabAt(position);
@@ -203,18 +196,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Update toolbar based on destination
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
-            // Reset all toolbar elements to GONE by default
             viewModel.setGridIconVisible(false);
             viewModel.setSearchIconVisible(false);
             viewModel.setCloseIconVisible(false);
             viewModel.setSearchViewVisible(false);
-
-            // Reset biến điều khiển menu
             shouldShowMoreIcon = false;
 
-            // Tùy chỉnh icon điều hướng và menu dựa trên destination
             if (destination.getId() == R.id.movieListFragment) {
                 String mode = arguments != null ? arguments.getString("mode", MovieListFragment.MODE_API) : MovieListFragment.MODE_API;
                 if (mode.equals(MovieListFragment.MODE_API)) {
@@ -233,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
                     Movie movie = (Movie) arguments.getSerializable("movie");
                     if (movie != null) {
                         binding.toolbarTitle.setText(movie.getTitle());
+                        lastSelectedMovie = movie;
                     }
                 }
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -247,11 +236,9 @@ public class MainActivity extends AppCompatActivity {
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             }
 
-            // Cập nhật menu để hiển thị hoặc ẩn icon ic_more
             invalidateOptionsMenu();
         });
 
-        // Theo dõi danh sách yêu thích để cập nhật badge
         movieListViewModel.getFavoriteMoviesLiveData().observe(this, favoriteMovies -> {
             TabLayout.Tab favoriteTab = binding.tabLayout.getTabAt(1);
             if (favoriteTab != null) {
@@ -264,7 +251,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Load danh sách yêu thích ban đầu
         movieListViewModel.loadFavoriteMovies();
     }
 
@@ -283,7 +269,20 @@ public class MainActivity extends AppCompatActivity {
             if (navController.getCurrentDestination() != null) {
                 int currentDestinationId = navController.getCurrentDestination().getId();
                 if (currentDestinationId == R.id.movieDetailsFragment) {
-                    navController.navigateUp();
+                    viewModel.setIsInMovieDetail(false);
+                    lastSelectedMovie = null;
+                    // Xóa MovieDetailFragment khỏi back stack
+                    navController.popBackStack(R.id.movieDetailsFragment, true);
+                    // Điều hướng về MovieListFragment với mode là MODE_API
+                    Bundle args = new Bundle();
+                    args.putString("mode", MovieListFragment.MODE_API);
+                    navController.navigate(R.id.movieListFragment, args);
+                    // Chọn lại tab Movies
+                    viewModel.setSelectedTabPosition(0);
+                    TabLayout.Tab tab = binding.tabLayout.getTabAt(0);
+                    if (tab != null) {
+                        tab.select();
+                    }
                 } else if (currentDestinationId != R.id.showAllRemindersFragment) {
                     if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
                         binding.drawerLayout.closeDrawer(GravityCompat.START);

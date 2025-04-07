@@ -4,6 +4,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment;
+
 import javax.inject.Inject;
 
 public class MainViewModel extends ViewModel {
@@ -15,7 +17,8 @@ public class MainViewModel extends ViewModel {
     private final MutableLiveData<Boolean> isCloseIconVisible = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> isSearchViewVisible = new MutableLiveData<>(false);
     private final MutableLiveData<String> searchQuery = new MutableLiveData<>("");
-    private final MutableLiveData<Integer> scrollPosition = new MutableLiveData<>(0);
+    private final MutableLiveData<Integer> scrollPositionApi = new MutableLiveData<>(0);
+    private final MutableLiveData<Integer> scrollPositionFavorite = new MutableLiveData<>(0);
     private final MutableLiveData<Boolean> shouldResetPosition = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> isInMovieDetail = new MutableLiveData<>(false);
 
@@ -103,12 +106,16 @@ public class MainViewModel extends ViewModel {
         setCloseIconVisible(false);
     }
 
-    public LiveData<Integer> getScrollPosition() {
-        return scrollPosition;
+    public LiveData<Integer> getScrollPosition(String mode) {
+        return mode.equals(MovieListFragment.MODE_API) ? scrollPositionApi : scrollPositionFavorite;
     }
 
-    public void setScrollPosition(int position) {
-        scrollPosition.setValue(position);
+    public void setScrollPosition(String mode, int position) {
+        if (mode.equals(MovieListFragment.MODE_API)) {
+            scrollPositionApi.setValue(position);
+        } else {
+            scrollPositionFavorite.setValue(position);
+        }
     }
 
     public LiveData<Boolean> getShouldResetPosition() {
