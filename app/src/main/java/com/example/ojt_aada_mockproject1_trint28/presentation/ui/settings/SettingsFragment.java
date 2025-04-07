@@ -6,9 +6,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -19,12 +16,8 @@ import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentCategoryBin
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentRatingFilterBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentReleaseYearBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentSortBinding;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.UpdateSettingsUseCase;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.main.MainViewModel;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListViewModel;
-import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListViewModelFactory;
-
-import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -36,19 +29,13 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     private MainViewModel mainViewModel;
     private SettingsViewModel settingsViewModel;
 
-    @Inject
-    MovieListViewModelFactory movieListViewModelFactory;
-
-    @Inject
-    UpdateSettingsUseCase updateSettingsUseCase;
-
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.setting, rootKey);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
         // Initialize ViewModels
-        movieListViewModel = new ViewModelProvider(this, movieListViewModelFactory).get(MovieListViewModel.class);
+        movieListViewModel = new ViewModelProvider(this).get(MovieListViewModel.class); // Hilt sẽ tự động inject
         mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
         settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
 

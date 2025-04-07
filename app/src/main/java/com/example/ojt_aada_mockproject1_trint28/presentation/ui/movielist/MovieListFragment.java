@@ -54,8 +54,8 @@ public class MovieListFragment extends Fragment {
     public static MovieListFragment newInstance(String mode) {
         MovieListFragment fragment = new MovieListFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_MODE, mode);
-        fragment.setArguments(args);
+            args.putString(ARG_MODE, mode);
+            fragment.setArguments(args);
         return fragment;
     }
 
@@ -136,6 +136,7 @@ public class MovieListFragment extends Fragment {
         }, movie -> {
             Bundle bundle = new Bundle();
             bundle.putSerializable("movie", movie);
+            mainViewModel.setIsInMovieDetail(true);
             navController.navigate(R.id.action_movieListFragment_to_movieDetailFragment, bundle);
         });
 
@@ -154,7 +155,7 @@ public class MovieListFragment extends Fragment {
 
         mainViewModel.getIsGridMode().observe(getViewLifecycleOwner(), newGridMode -> {
             int firstVisiblePosition = getFirstVisibleItemPosition();
-            viewModel.setScrollPosition(firstVisiblePosition);
+            mainViewModel.setScrollPosition(firstVisiblePosition);
 
             isGridMode = newGridMode;
             switchLayoutManager(isGridMode);
@@ -172,13 +173,14 @@ public class MovieListFragment extends Fragment {
             });
         });
 
-        if (mode.equals(MODE_API)) {
-            mainViewModel.getMovieType().observe(getViewLifecycleOwner(), movieType -> {
-                if (movieType != null) {
-                    loadMovies(movieType);
-                }
-            });
-        } else if (mode.equals(MODE_FAVORITE)) {
+        mainViewModel.getMovieType().observe(getViewLifecycleOwner(), movieType -> {
+            if (movieType != null) {
+                loadMovies(movieType);
+                mainViewModel.setShouldResetPosition(true);
+            }
+        });
+
+        if (mode.equals(MODE_FAVORITE)) {
             // Load danh sách yêu thích ban đầu
             viewModel.loadFavoriteMovies();
             viewModel.getFavoriteMoviesLiveData().observe(getViewLifecycleOwner(), movies -> {
@@ -223,7 +225,7 @@ public class MovieListFragment extends Fragment {
                 super.onScrolled(recyclerView, dx, dy);
                 int firstVisiblePosition = getFirstVisibleItemPosition();
                 if (firstVisiblePosition != RecyclerView.NO_POSITION) {
-                    viewModel.setScrollPosition(firstVisiblePosition);
+                    mainViewModel.setScrollPosition(firstVisiblePosition);
                 }
             }
         });
@@ -232,20 +234,25 @@ public class MovieListFragment extends Fragment {
             if (loadStates.getRefresh() instanceof LoadState.NotLoading &&
                     loadStates.getAppend() instanceof LoadState.NotLoading &&
                     loadStates.getPrepend() instanceof LoadState.NotLoading) {
-                Integer savedPosition = viewModel.getScrollPosition().getValue();
-                if (savedPosition != null && savedPosition > 0) {
-                    binding.recyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-                        @Override
-                        public void onLayoutChange(View v, int left, int top, int right, int bottom,
-                                                   int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                            binding.recyclerView.removeOnLayoutChangeListener(this);
-                            if (adapter.getItemCount() > savedPosition) {
-                                binding.recyclerView.scrollToPosition(savedPosition);
-                            } else {
-                                binding.recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+                if (mainViewModel.getShouldResetPosition().getValue() != null && mainViewModel.getShouldResetPosition().getValue()) {
+                    binding.recyclerView.scrollToPosition(0);
+                    mainViewModel.setShouldResetPosition(false);
+                } else {
+                    Integer savedPosition = mainViewModel.getScrollPosition().getValue();
+                    if (savedPosition != null && savedPosition > 0) {
+                        binding.recyclerView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+                            @Override
+                            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                                binding.recyclerView.removeOnLayoutChangeListener(this);
+                                if (adapter.getItemCount() > savedPosition) {
+                                    binding.recyclerView.scrollToPosition(savedPosition);
+                                } else {
+                                    binding.recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
             return null;
@@ -257,7 +264,7 @@ public class MovieListFragment extends Fragment {
         lastMovieType = movieType;
 
         if (shouldResetPosition) {
-            viewModel.setScrollPosition(0);
+            mainViewModel.setScrollPosition(0);
         }
 
         if (binding.swipeRefreshLayout.isRefreshing()) {

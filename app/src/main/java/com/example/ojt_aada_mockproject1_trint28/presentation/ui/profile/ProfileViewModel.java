@@ -6,8 +6,8 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Profile;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Reminder;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetProfileUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetRemindersUseCase;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ProfileUseCases;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ReminderUseCases;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -27,8 +27,8 @@ import android.util.Log;
 
 @HiltViewModel
 public class ProfileViewModel extends ViewModel {
-    private final GetProfileUseCase getProfileUseCase;
-    private final GetRemindersUseCase getRemindersUseCase;
+    private final ProfileUseCases profileUseCases;
+    private final ReminderUseCases reminderUseCases;
 
     private final MutableLiveData<Profile> _profile = new MutableLiveData<>();
     public LiveData<Profile> profile = _profile;
@@ -46,16 +46,16 @@ public class ProfileViewModel extends ViewModel {
     private final CompositeDisposable disposables = new CompositeDisposable();
 
     @Inject
-    public ProfileViewModel(GetProfileUseCase getProfileUseCase, GetRemindersUseCase getRemindersUseCase) {
-        this.getProfileUseCase = getProfileUseCase;
-        this.getRemindersUseCase = getRemindersUseCase;
+    public ProfileViewModel(ProfileUseCases profileUseCases, ReminderUseCases reminderUseCases) {
+        this.profileUseCases = profileUseCases;
+        this.reminderUseCases = reminderUseCases;
         loadProfile();
         loadReminders();
     }
 
     private void loadProfile() {
         disposables.add(
-                getProfileUseCase.execute()
+                profileUseCases.getProfile()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -72,14 +72,6 @@ public class ProfileViewModel extends ViewModel {
     public LiveData<Bitmap> getAvatar() {
         return avatar;
     }
-
-
-    private String bitmapToBase64(Bitmap bitmap) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
-        return Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
-    }
-
     private Bitmap base64ToBitmap(String base64String) {
         byte[] bytes = Base64.decode(base64String, Base64.DEFAULT);
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
@@ -87,7 +79,7 @@ public class ProfileViewModel extends ViewModel {
 
     private void loadReminders() {
         disposables.add(
-                getRemindersUseCase.execute()
+                reminderUseCases.getReminders()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(

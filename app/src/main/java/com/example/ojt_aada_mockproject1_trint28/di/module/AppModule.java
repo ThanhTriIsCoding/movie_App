@@ -2,10 +2,8 @@ package com.example.ojt_aada_mockproject1_trint28.di.module;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-
 import androidx.preference.PreferenceManager;
 import androidx.room.Room;
-
 import com.example.ojt_aada_mockproject1_trint28.data.local.dao.MovieDao;
 import com.example.ojt_aada_mockproject1_trint28.data.local.dao.ReminderDao;
 import com.example.ojt_aada_mockproject1_trint28.data.local.database.AppDatabase;
@@ -17,23 +15,15 @@ import com.example.ojt_aada_mockproject1_trint28.data.repository.ReminderReposit
 import com.example.ojt_aada_mockproject1_trint28.data.repository.SettingsRepositoryImpl;
 import com.example.ojt_aada_mockproject1_trint28.domain.repository.IMovieRepository;
 import com.example.ojt_aada_mockproject1_trint28.domain.repository.SettingsRepository;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.AddFavoriteMovieUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.AddReminderUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetCastCrewUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetFavoriteMoviesUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetMovieDetailsUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetMoviesUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.IsMovieLikedUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.RemoveFavoriteMovieUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.UpdateSettingsUseCase;
-import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListViewModelFactory;
-
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.MovieUseCases;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ProfileUseCases;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ReminderUseCases;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.SettingsUseCases;
 import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import dagger.hilt.components.SingletonComponent;
-
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -70,8 +60,8 @@ public class AppModule {
 
     @Provides
     @Singleton
-    MovieRepository provideMovieRepository(ApiService apiService, UpdateSettingsUseCase updateSettingsUseCase, @Named("apiKey") String apiKey, MovieDao movieDao) {
-        return new MovieRepository(apiService, updateSettingsUseCase, apiKey, movieDao);
+    MovieRepository provideMovieRepository(ApiService apiService, SettingsUseCases settingsUseCases, @Named("apiKey") String apiKey, MovieDao movieDao) {
+        return new MovieRepository(apiService, settingsUseCases, apiKey, movieDao);
     }
 
     @Provides
@@ -100,50 +90,20 @@ public class AppModule {
 
     @Provides
     @Singleton
-    AddReminderUseCase provideAddReminderUseCase(ReminderRepository reminderRepository) {
-        return new AddReminderUseCase(reminderRepository);
+    MovieUseCases provideMovieUseCases(IMovieRepository movieRepository) {
+        return new MovieUseCases(movieRepository);
     }
 
     @Provides
     @Singleton
-    GetMoviesUseCase provideGetMoviesUseCase(IMovieRepository movieRepository) {
-        return new GetMoviesUseCase(movieRepository);
+    ReminderUseCases provideReminderUseCases(ReminderRepository reminderRepository) {
+        return new ReminderUseCases(reminderRepository);
     }
 
     @Provides
     @Singleton
-    GetMovieDetailsUseCase provideGetMovieDetailsUseCase(IMovieRepository movieRepository) {
-        return new GetMovieDetailsUseCase(movieRepository);
-    }
-
-    @Provides
-    @Singleton
-    GetCastCrewUseCase provideGetCastCrewUseCase(IMovieRepository movieRepository) {
-        return new GetCastCrewUseCase(movieRepository);
-    }
-
-    @Provides
-    @Singleton
-    AddFavoriteMovieUseCase provideAddFavoriteMovieUseCase(IMovieRepository movieRepository) {
-        return new AddFavoriteMovieUseCase(movieRepository);
-    }
-
-    @Provides
-    @Singleton
-    RemoveFavoriteMovieUseCase provideRemoveFavoriteMovieUseCase(IMovieRepository movieRepository) {
-        return new RemoveFavoriteMovieUseCase(movieRepository);
-    }
-
-    @Provides
-    @Singleton
-    GetFavoriteMoviesUseCase provideGetFavoriteMoviesUseCase(IMovieRepository movieRepository) {
-        return new GetFavoriteMoviesUseCase(movieRepository);
-    }
-
-    @Provides
-    @Singleton
-    IsMovieLikedUseCase provideIsMovieLikedUseCase(IMovieRepository movieRepository) {
-        return new IsMovieLikedUseCase(movieRepository);
+    ProfileUseCases provideProfileUseCases(ProfileRepository profileRepository) {
+        return new ProfileUseCases(profileRepository);
     }
 
     @Provides
@@ -160,20 +120,8 @@ public class AppModule {
 
     @Provides
     @Singleton
-    UpdateSettingsUseCase provideUpdateSettingsUseCase(SettingsRepository settingsRepository) {
-        return new UpdateSettingsUseCase(settingsRepository);
+    SettingsUseCases provideSettingsUseCases(SettingsRepository settingsRepository) {
+        return new SettingsUseCases(settingsRepository);
     }
 
-    @Provides
-    @Singleton
-    public MovieListViewModelFactory provideMovieListViewModelFactory(
-            GetMoviesUseCase getMoviesUseCase,
-            UpdateSettingsUseCase updateSettingsUseCase,
-            @Named("apiKey") String apiKey,
-            AddFavoriteMovieUseCase addFavoriteMovieUseCase,
-            RemoveFavoriteMovieUseCase removeFavoriteMovieUseCase,
-            GetFavoriteMoviesUseCase getFavoriteMoviesUseCase,
-            IsMovieLikedUseCase isMovieLikedUseCase) {
-        return new MovieListViewModelFactory(getMoviesUseCase, updateSettingsUseCase, apiKey, addFavoriteMovieUseCase, removeFavoriteMovieUseCase, getFavoriteMoviesUseCase, isMovieLikedUseCase);
-    }
 }

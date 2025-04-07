@@ -7,7 +7,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.ojt_aada_mockproject1_trint28.R;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.UpdateSettingsUseCase;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.SettingsUseCases;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.main.MainViewModel;
 
 import javax.inject.Inject;
@@ -16,7 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 
 @HiltViewModel
 public class SettingsViewModel extends ViewModel {
-    private final UpdateSettingsUseCase updateSettingsUseCase;
+    private final SettingsUseCases settingsUseCases;
     private final SharedPreferences sharedPreferences;
     private final MainViewModel mainViewModel;
 
@@ -28,8 +28,8 @@ public class SettingsViewModel extends ViewModel {
     private final MutableLiveData<String> releaseYearInput = new MutableLiveData<>();
 
     @Inject
-    public SettingsViewModel(UpdateSettingsUseCase updateSettingsUseCase, SharedPreferences sharedPreferences, MainViewModel mainViewModel) {
-        this.updateSettingsUseCase = updateSettingsUseCase;
+    public SettingsViewModel(SettingsUseCases settingsUseCases, SharedPreferences sharedPreferences, MainViewModel mainViewModel) {
+        this.settingsUseCases = settingsUseCases;
         this.sharedPreferences = sharedPreferences;
         this.mainViewModel = mainViewModel;
         loadSettings();
@@ -72,28 +72,28 @@ public class SettingsViewModel extends ViewModel {
     public void setCategory(String newCategory) {
         category.setValue(newCategory);
         sharedPreferences.edit().putString("category", newCategory).apply();
-        updateSettingsUseCase.updateCategory(newCategory).subscribe();
+        settingsUseCases.updateCategory(newCategory).subscribe();
     }
 
     public void setRating(int newRating) {
         rating.setValue(newRating);
         seekBarRating.setValue(newRating);
         sharedPreferences.edit().putInt("rate", newRating).apply();
-        updateSettingsUseCase.updateRating(newRating).subscribe();
+        settingsUseCases.updateRating(newRating).subscribe();
     }
 
     public void setReleaseYear(int newYear) {
         releaseYear.setValue(newYear);
         releaseYearInput.setValue(String.valueOf(newYear));
         sharedPreferences.edit().putString("release_year", String.valueOf(newYear)).apply();
-        updateSettingsUseCase.updateReleaseYear(newYear).subscribe();
+        settingsUseCases.updateReleaseYear(newYear).subscribe();
     }
 
     public void setSortBy(String newSortBy) {
         sortBy.setValue(newSortBy);
         int sortOption = newSortBy.equals("release_date") ? R.id.rb_release_date : R.id.rb_rating;
         sharedPreferences.edit().putInt("sort_by", sortOption).apply();
-        updateSettingsUseCase.updateSortBy(newSortBy).subscribe();
+        settingsUseCases.updateSortBy(newSortBy).subscribe();
     }
 
     public void resetSettings() {
@@ -101,7 +101,7 @@ public class SettingsViewModel extends ViewModel {
         setRating(5);
         setReleaseYear(2015);
         setSortBy("release_date");
-        updateSettingsUseCase.resetSettings().subscribe();
+        settingsUseCases.resetSettings().subscribe();
     }
 
     public void onCategorySelected(int checkedId, AlertDialog dialog) {

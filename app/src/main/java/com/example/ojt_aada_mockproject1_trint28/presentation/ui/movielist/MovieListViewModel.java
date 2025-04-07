@@ -10,12 +10,8 @@ import androidx.paging.PagingData;
 
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Settings;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.AddFavoriteMovieUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetFavoriteMoviesUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetMoviesUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.IsMovieLikedUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.RemoveFavoriteMovieUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.UpdateSettingsUseCase;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.MovieUseCases;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.SettingsUseCases;
 
 import java.util.List;
 
@@ -30,44 +26,37 @@ import javax.inject.Named;
 
 @HiltViewModel
 public class MovieListViewModel extends ViewModel {
-    private final GetMoviesUseCase getMoviesUseCase;
-    private final UpdateSettingsUseCase updateSettingsUseCase;
-    private final AddFavoriteMovieUseCase addFavoriteMovieUseCase;
-    private final RemoveFavoriteMovieUseCase removeFavoriteMovieUseCase;
-    private final GetFavoriteMoviesUseCase getFavoriteMoviesUseCase;
-    private final IsMovieLikedUseCase isMovieLikedUseCase;
+    private final MovieUseCases movieUseCases;
+    private final SettingsUseCases settingsUseCases;
     private final String apiKey;
     private Settings currentSettings;
     private final MutableLiveData<Integer> scrollPosition = new MutableLiveData<>(0);
     private final MutableLiveData<List<Movie>> favoriteMovies = new MutableLiveData<>();
 
     @Inject
-    public MovieListViewModel(GetMoviesUseCase getMoviesUseCase, UpdateSettingsUseCase updateSettingsUseCase, @Named("apiKey") String apiKey,
-                              AddFavoriteMovieUseCase addFavoriteMovieUseCase, RemoveFavoriteMovieUseCase removeFavoriteMovieUseCase,
-                              GetFavoriteMoviesUseCase getFavoriteMoviesUseCase, IsMovieLikedUseCase isMovieLikedUseCase) {
-        this.getMoviesUseCase = getMoviesUseCase;
-        this.updateSettingsUseCase = updateSettingsUseCase;
+    public MovieListViewModel(
+            MovieUseCases movieUseCases,
+            SettingsUseCases settingsUseCases,
+            @Named("apiKey") String apiKey) {
+        this.movieUseCases = movieUseCases;
+        this.settingsUseCases = settingsUseCases;
         this.apiKey = apiKey;
-        this.addFavoriteMovieUseCase = addFavoriteMovieUseCase;
-        this.removeFavoriteMovieUseCase = removeFavoriteMovieUseCase;
-        this.getFavoriteMoviesUseCase = getFavoriteMoviesUseCase;
-        this.isMovieLikedUseCase = isMovieLikedUseCase;
         loadSettings();
     }
 
     private void loadSettings() {
-        updateSettingsUseCase.getSettings()
+        settingsUseCases.getSettings()
                 .subscribeOn(Schedulers.io())
                 .subscribe(settings -> currentSettings = settings)
                 .dispose();
     }
 
     public Flowable<PagingData<Movie>> getMovies(String movieType) {
-        return getMoviesUseCase.execute(movieType, apiKey);
+        return movieUseCases.getMovies(movieType, apiKey);
     }
 
     public Flowable<List<Movie>> getFavoriteMovies() {
-        return getFavoriteMoviesUseCase.execute(1);
+        return movieUseCases.getFavoriteMovies(1);
     }
 
     public Completable addFavoriteMovie(Movie movie) {
@@ -81,7 +70,7 @@ public class MovieListViewModel extends ViewModel {
                 movie.getPosterUrl(),
                 true
         );
-        return addFavoriteMovieUseCase.execute(updatedMovie, 1);
+        return movieUseCases.addFavoriteMovie(updatedMovie, 1);
     }
 
     public Completable removeFavoriteMovie(Movie movie) {
@@ -95,11 +84,11 @@ public class MovieListViewModel extends ViewModel {
                 movie.getPosterUrl(),
                 false
         );
-        return removeFavoriteMovieUseCase.execute(updatedMovie, 1);
+        return movieUseCases.removeFavoriteMovie(updatedMovie, 1);
     }
 
     public Single<Boolean> isMovieLiked(int movieId) {
-        return isMovieLikedUseCase.execute(movieId, 1);
+        return movieUseCases.isMovieLiked(movieId, 1);
     }
 
     public Settings getCurrentSettings() {

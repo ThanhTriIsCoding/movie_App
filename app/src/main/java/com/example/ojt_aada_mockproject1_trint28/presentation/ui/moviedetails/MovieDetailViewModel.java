@@ -7,13 +7,10 @@ import com.example.ojt_aada_mockproject1_trint28.data.repository.ReminderReposit
 import com.example.ojt_aada_mockproject1_trint28.domain.model.CastCrew;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Reminder;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.AddFavoriteMovieUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.AddReminderUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetCastCrewUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetMovieDetailsUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.IsMovieLikedUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.RemoveFavoriteMovieUseCase;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.MovieUseCases;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ReminderUseCases;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import dagger.hilt.android.lifecycle.HiltViewModel;
@@ -26,38 +23,26 @@ import javax.inject.Named;
 
 @HiltViewModel
 public class MovieDetailViewModel extends androidx.lifecycle.ViewModel {
-    private final GetMovieDetailsUseCase getMovieDetailsUseCase;
-    private final GetCastCrewUseCase getCastCrewUseCase;
-    private final AddFavoriteMovieUseCase addFavoriteMovieUseCase;
-    private final RemoveFavoriteMovieUseCase removeFavoriteMovieUseCase;
-    private final IsMovieLikedUseCase isMovieLikedUseCase;
-    private final AddReminderUseCase addReminderUseCase;
+    private final MovieUseCases movieUseCases;
+    private final ReminderUseCases reminderUseCases;
     private final String apiKey;
 
     @Inject
     public MovieDetailViewModel(
-            GetMovieDetailsUseCase getMovieDetailsUseCase,
-            GetCastCrewUseCase getCastCrewUseCase,
-            AddFavoriteMovieUseCase addFavoriteMovieUseCase,
-            RemoveFavoriteMovieUseCase removeFavoriteMovieUseCase,
-            IsMovieLikedUseCase isMovieLikedUseCase,
-            AddReminderUseCase addReminderUseCase,
+            MovieUseCases movieUseCases,
+            ReminderUseCases reminderUseCases,
             @Named("apiKey") String apiKey) {
-        this.getMovieDetailsUseCase = getMovieDetailsUseCase;
-        this.getCastCrewUseCase = getCastCrewUseCase;
-        this.addFavoriteMovieUseCase = addFavoriteMovieUseCase;
-        this.removeFavoriteMovieUseCase = removeFavoriteMovieUseCase;
-        this.isMovieLikedUseCase = isMovieLikedUseCase;
-        this.addReminderUseCase = addReminderUseCase;
+        this.movieUseCases = movieUseCases;
+        this.reminderUseCases = reminderUseCases;
         this.apiKey = apiKey;
     }
 
     public Single<MovieDetailResponse> getMovieDetails(int movieId) {
-        return getMovieDetailsUseCase.execute(movieId, apiKey);
+        return movieUseCases.getMovieDetails(movieId, apiKey);
     }
 
     public Flowable<PagingData<CastCrew>> getCastCrew(int movieId) {
-        return getCastCrewUseCase.execute(movieId, apiKey);
+        return movieUseCases.getCastCrew(movieId, apiKey);
     }
 
     public Completable addFavoriteMovie(Movie movie) {
@@ -71,7 +56,7 @@ public class MovieDetailViewModel extends androidx.lifecycle.ViewModel {
                 movie.getPosterUrl(),
                 true
         );
-        return addFavoriteMovieUseCase.execute(updatedMovie, 1);
+        return movieUseCases.addFavoriteMovie(updatedMovie, 1);
     }
 
     public Completable removeFavoriteMovie(Movie movie) {
@@ -85,23 +70,34 @@ public class MovieDetailViewModel extends androidx.lifecycle.ViewModel {
                 movie.getPosterUrl(),
                 false
         );
-        return removeFavoriteMovieUseCase.execute(updatedMovie, 1);
+        return movieUseCases.removeFavoriteMovie(updatedMovie, 1);
     }
 
     public Single<Boolean> isMovieLiked(int movieId) {
-        return isMovieLikedUseCase.execute(movieId, 1);
+        return movieUseCases.isMovieLiked(movieId, 1);
     }
 
     public Completable addReminder(Reminder reminder) {
-        return addReminderUseCase.execute(reminder);
+        return reminderUseCases.addReminder(reminder);
     }
 
     public Flowable<List<Reminder>> checkReminderConflict(int movieId, String dateTime) {
-        return addReminderUseCase.getReminderRepository().getRemindersByMovieAndTime(movieId, dateTime, 1);
+        return reminderUseCases.getReminders()
+                .map(reminders -> {
+                    List<Reminder> conflictingReminders = new ArrayList<>();
+                    for (Reminder reminder : reminders) {
+                        if (reminder.getMovieId() == movieId && reminder.getDateTime().equals(dateTime)) {
+                            conflictingReminders.add(reminder);
+                        }
+                    }
+                    return conflictingReminders;
+                });
     }
 
     // Expose ReminderRepository for conflict checking
     public ReminderRepository getReminderRepository() {
-        return addReminderUseCase.getReminderRepository();
+        // Note: Truy cập trực tiếp ReminderRepository từ ReminderUseCases không được khuyến nghị.
+        // Thay vào đó, bạn nên thêm một phương thức trong ReminderUseCases để lấy reminders theo movieId và dateTime.
+        throw new UnsupportedOperationException("Direct access to ReminderRepository is not supported. Use ReminderUseCases instead.");
     }
 }

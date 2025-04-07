@@ -17,7 +17,7 @@ import com.example.ojt_aada_mockproject1_trint28.domain.model.CastCrew;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Settings;
 import com.example.ojt_aada_mockproject1_trint28.domain.repository.IMovieRepository;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.UpdateSettingsUseCase;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.SettingsUseCases;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,22 +29,22 @@ import io.reactivex.rxjava3.core.Single;
 public class MovieRepository implements IMovieRepository {
     private final MovieDao movieDao;
     private final ApiService apiService;
-    private final UpdateSettingsUseCase updateSettingsUseCase;
+    private final SettingsUseCases settingsUseCases; // Thay thế UpdateSettingsUseCase bằng SettingsUseCases
     private final String apiKey;
     private String imageBaseUrl = "https://image.tmdb.org/t/p/";
     private String posterSize = "w500";
     private String profileSize = "w185";
 
-    public MovieRepository(ApiService apiService, UpdateSettingsUseCase updateSettingsUseCase, String apiKey, MovieDao movieDao) {
+    public MovieRepository(ApiService apiService, SettingsUseCases settingsUseCases, String apiKey, MovieDao movieDao) {
         this.apiService = apiService;
-        this.updateSettingsUseCase = updateSettingsUseCase;
+        this.settingsUseCases = settingsUseCases;
         this.apiKey = apiKey;
         this.movieDao = movieDao;
     }
 
     @Override
     public Flowable<PagingData<Movie>> getMovies(String movieType, String apiKey) {
-        return updateSettingsUseCase.getSettings()
+        return settingsUseCases.getSettings() // Sử dụng settingsUseCases thay vì updateSettingsUseCase
                 .flatMapPublisher(settings -> {
                     Pager<Integer, Movie> pager = new Pager<>(
                             new PagingConfig(

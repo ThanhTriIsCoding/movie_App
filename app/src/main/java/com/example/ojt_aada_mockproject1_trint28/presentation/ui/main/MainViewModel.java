@@ -15,6 +15,9 @@ public class MainViewModel extends ViewModel {
     private final MutableLiveData<Boolean> isCloseIconVisible = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> isSearchViewVisible = new MutableLiveData<>(false);
     private final MutableLiveData<String> searchQuery = new MutableLiveData<>("");
+    private final MutableLiveData<Integer> scrollPosition = new MutableLiveData<>(0);
+    private final MutableLiveData<Boolean> shouldResetPosition = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> isInMovieDetail = new MutableLiveData<>(false);
 
     @Inject
     public MainViewModel() {
@@ -98,5 +101,29 @@ public class MainViewModel extends ViewModel {
         setSearchViewVisible(false);
         setSearchIconVisible(true);
         setCloseIconVisible(false);
+    }
+
+    public LiveData<Integer> getScrollPosition() {
+        return scrollPosition;
+    }
+
+    public void setScrollPosition(int position) {
+        scrollPosition.setValue(position);
+    }
+
+    public LiveData<Boolean> getShouldResetPosition() {
+        return shouldResetPosition;
+    }
+
+    public void setShouldResetPosition(boolean reset) {
+        shouldResetPosition.setValue(reset);
+    }
+
+    public LiveData<Boolean> getIsInMovieDetail() {
+        return isInMovieDetail;
+    }
+
+    public void setIsInMovieDetail(boolean isInDetail) {
+        isInMovieDetail.setValue(isInDetail);
     }
 }

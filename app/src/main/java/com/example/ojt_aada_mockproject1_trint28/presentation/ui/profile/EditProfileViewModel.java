@@ -11,7 +11,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.ojt_aada_mockproject1_trint28.data.repository.ProfileRepository;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Profile;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetProfileUseCase;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ProfileUseCases;
 
 import java.io.ByteArrayOutputStream;
 
@@ -28,7 +28,7 @@ public class EditProfileViewModel extends ViewModel {
     private static final String USER_ID = "1";
 
     private final ProfileRepository profileRepository;
-    private final GetProfileUseCase getProfileUseCase;
+    private final ProfileUseCases profileUseCases;
     private final CompositeDisposable disposables = new CompositeDisposable();
 
     private final MutableLiveData<String> name = new MutableLiveData<>("");
@@ -39,9 +39,9 @@ public class EditProfileViewModel extends ViewModel {
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
 
     @Inject
-    public EditProfileViewModel(ProfileRepository profileRepository, GetProfileUseCase getProfileUseCase) {
+    public EditProfileViewModel(ProfileRepository profileRepository, ProfileUseCases profileUseCases) {
         this.profileRepository = profileRepository;
-        this.getProfileUseCase = getProfileUseCase;
+        this.profileUseCases = profileUseCases;
         loadProfile();
     }
 
@@ -62,7 +62,7 @@ public class EditProfileViewModel extends ViewModel {
 
     private void loadProfile() {
         disposables.add(
-                getProfileUseCase.execute()
+                profileUseCases.getProfile()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(

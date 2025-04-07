@@ -27,11 +27,11 @@ import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ActivityMainBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.NavHeaderBinding;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.UpdateSettingsUseCase;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListViewModel;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.EditProfileActivity;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.ProfileViewModel;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.SettingsUseCases;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences sharedPreferences;
 
     @Inject
-    UpdateSettingsUseCase updateSettingsUseCase;
+    SettingsUseCases settingsUseCases;
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -316,7 +316,7 @@ public class MainActivity extends AppCompatActivity {
         viewModel.setMovieType(movieType);
         if (selectedCategory != null) {
             sharedPreferences.edit().putString("category", selectedCategory).apply();
-            updateSettingsUseCase.updateCategory(selectedCategory).subscribe();
+            settingsUseCases.updateCategory(selectedCategory).subscribe();
         }
 
         return true;

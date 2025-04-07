@@ -5,8 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Reminder;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.DeleteReminderUseCase;
-import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetRemindersUseCase;
+import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ReminderUseCases;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,22 +21,20 @@ import javax.inject.Inject;
 
 @HiltViewModel
 public class ShowAllRemindersViewModel extends ViewModel {
-    private final GetRemindersUseCase getRemindersUseCase;
-    private final DeleteReminderUseCase deleteReminderUseCase;
+    private final ReminderUseCases reminderUseCases;
     private final MutableLiveData<List<Reminder>> _reminders = new MutableLiveData<>(new ArrayList<>());
     public LiveData<List<Reminder>> reminders = _reminders;
     private final CompositeDisposable disposables = new CompositeDisposable();
 
     @Inject
-    public ShowAllRemindersViewModel(GetRemindersUseCase getRemindersUseCase, DeleteReminderUseCase deleteReminderUseCase) {
-        this.getRemindersUseCase = getRemindersUseCase;
-        this.deleteReminderUseCase = deleteReminderUseCase;
+    public ShowAllRemindersViewModel(ReminderUseCases reminderUseCases) {
+        this.reminderUseCases = reminderUseCases;
         loadReminders();
     }
 
     private void loadReminders() {
         disposables.add(
-                getRemindersUseCase.execute()
+                reminderUseCases.getReminders()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
@@ -55,7 +52,7 @@ public class ShowAllRemindersViewModel extends ViewModel {
 
     public void deleteReminder(Reminder reminder) {
         disposables.add(
-                deleteReminderUseCase.execute(reminder)
+                reminderUseCases.deleteReminder(reminder)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
