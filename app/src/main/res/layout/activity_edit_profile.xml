@@ -38,8 +38,7 @@
                 android:layout_weight="1"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_launcher_background"
-                app:circleImageUrl="@{viewModel.avatarUri != null ? viewModel.avatarUri.toString() : null}"
-                android:scaleType="centerCrop"
+                android:imageBitmap="@{viewModel.avatar}"
                 tools:src="@drawable/ic_launcher_background" />
 
             <Button
@@ -77,7 +76,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Name"
-                    android:text="@={viewModel.name}"
+                    android:text="@{viewModel.name}"
                     android:textSize="16sp"
                     android:textColor="@color/black"
                     android:background="@null"
@@ -118,7 +117,7 @@
                     android:layout_height="wrap_content"
                     android:hint="Email"
                     android:inputType="textEmailAddress"
-                    android:text="@={viewModel.email}"
+                    android:text="@{viewModel.email}"
                     android:textSize="16sp"
                     android:textColor="@color/black"
                     android:background="@null"
@@ -159,7 +158,9 @@
                     android:layout_height="wrap_content"
                     android:hint="Birthday"
                     android:inputType="none"
-                    android:text="@={viewModel.birthday}"
+                    android:editable="false"
+                    android:focusable="false"
+                    android:text="@{viewModel.birthday}"
                     android:textSize="16sp"
                     android:textColor="@color/black"
                     android:background="@null"
@@ -193,14 +194,15 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:checkedButton="@{viewModel.gender.equals(`Male`) ? @id/rb_male : @id/rb_female}"
+                app:checkedButtonAttrChanged="@{() -> null}">
 
                 <RadioButton
                     android:id="@+id/rb_male"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:checked="@{viewModel.gender.equals(`Male`)}"
                     android:buttonTint="@android:color/holo_blue_dark"
                     android:text="Male"
                     android:textColor="@android:color/black" />
@@ -210,7 +212,6 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:checked="@{viewModel.gender.equals(`Female`)}"
                     android:buttonTint="@android:color/holo_blue_dark"
                     android:text="Female"
                     android:textColor="@android:color/black" />

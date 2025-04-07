@@ -7,6 +7,7 @@ import com.example.ojt_aada_mockproject1_trint28.data.repository.ReminderReposit
 import com.google.firebase.FirebaseApp;
 
 import dagger.hilt.android.HiltAndroidApp;
+import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @HiltAndroidApp
@@ -22,5 +23,10 @@ public class MyApplication extends Application {
         repository.deletePastReminders(1) // Assuming userId = 1
                 .subscribeOn(Schedulers.io())
                 .subscribe();
+
+        RxJavaPlugins.setErrorHandler(throwable -> {
+            throwable.printStackTrace();
+            // Optionally, show a user-facing message if appropriate
+        });
     }
 }

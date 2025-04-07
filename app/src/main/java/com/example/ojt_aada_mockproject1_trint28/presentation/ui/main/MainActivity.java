@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,8 +26,10 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ActivityMainBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.NavHeaderBinding;
+import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.UpdateSettingsUseCase;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment;
+import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListViewModel;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.EditProfileActivity;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.ProfileViewModel;
 import com.google.android.material.navigation.NavigationView;
@@ -41,7 +45,9 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private MainViewModel viewModel;
     private ProfileViewModel profileViewModel;
+    private MovieListViewModel movieListViewModel;
     private NavController navController;
+    private boolean shouldShowMoreIcon = false;
 
     @Inject
     SharedPreferences sharedPreferences;
@@ -67,11 +73,47 @@ public class MainActivity extends AppCompatActivity {
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
         }
 
-        // Thiết lập ViewModel
+        // Set up ViewModel
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
         profileViewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
+        movieListViewModel = new ViewModelProvider(this).get(MovieListViewModel.class);
         binding.setViewModel(viewModel);
         binding.setLifecycleOwner(this);
+
+        // Set up click listeners for toolbar icons
+        binding.setOnGridClick(v -> viewModel.toggleDisplayMode());
+        binding.setOnSearchClick(v -> {
+            viewModel.setSearchViewVisible(true);
+            viewModel.setSearchIconVisible(false);
+            viewModel.setCloseIconVisible(true);
+        });
+        binding.setOnCloseClick(v -> {
+            viewModel.clearSearch();
+            // Tải lại danh sách phim yêu thích khi bấm nút "close"
+            if (navController.getCurrentDestination() != null &&
+                    navController.getCurrentDestination().getId() == R.id.movieListFragment) {
+                // Sử dụng getCurrentBackStackEntry().getArguments() để lấy Bundle
+                Bundle args = navController.getCurrentBackStackEntry().getArguments();
+                String mode = args != null ? args.getString("mode", MovieListFragment.MODE_API) : MovieListFragment.MODE_API;
+                if (mode.equals(MovieListFragment.MODE_FAVORITE)) {
+                    movieListViewModel.loadFavoriteMovies();
+                }
+            }
+        });
+
+        // Theo dõi sự thay đổi của search_view
+        binding.searchView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                viewModel.setSearchQuery(s.toString());
+            }
+        });
 
         // Bind ProfileViewModel to Navigation Drawer Header
         NavigationView navigationView = binding.navView;
@@ -100,10 +142,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Thiết lập Toolbar trước khi làm việc với Navigation Component
+        // Set up Toolbar
         setSupportActionBar(binding.toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
 
-        // Thiết lập Navigation Component
+        // Set up Navigation Component
         Fragment navHostFragment = getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         if (navHostFragment instanceof NavHostFragment) {
             navController = ((NavHostFragment) navHostFragment).getNavController();
@@ -116,22 +161,19 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
-        // Thiết lập Navigation Drawer
+        // Set up Navigation Drawer
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        // Thiết lập TabLayout
+        // Set up TabLayout
         binding.tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                // Update the selected tab position in ViewModel
                 viewModel.setSelectedTabPosition(tab.getPosition());
-                // Navigate to the corresponding fragment
                 switch (tab.getPosition()) {
                     case 0:
                         navController.navigate(R.id.movieListFragment);
                         break;
                     case 1:
-                        // Navigate to MovieListFragment with "favorite" mode
                         Bundle args = new Bundle();
                         args.putString("mode", MovieListFragment.MODE_FAVORITE);
                         navController.navigate(R.id.movieListFragment, args);
@@ -154,60 +196,105 @@ public class MainActivity extends AppCompatActivity {
         // Observe the selected tab position from ViewModel to restore it
         viewModel.getSelectedTabPosition().observe(this, position -> {
             if (position != null) {
-                // Select the tab in TabLayout
                 TabLayout.Tab tab = binding.tabLayout.getTabAt(position);
                 if (tab != null && !tab.isSelected()) {
                     tab.select();
-                    // The onTabSelected listener will handle navigation to the correct fragment
                 }
             }
         });
 
-        // In MainActivity, modify the observer
-        profileViewModel.reminders.observe(this, reminders -> {
-            Log.d("MainActivity", "ProfileViewModel reminders updated: " + reminders.size() + " reminders");
-            // Invalidate the NavigationView to force a redraw
-            binding.navView.invalidate();
-        });
-
-        // Cập nhật tiêu đề ActionBar
+        // Update toolbar based on destination
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            // Reset all toolbar elements to GONE by default
+            viewModel.setGridIconVisible(false);
+            viewModel.setSearchIconVisible(false);
+            viewModel.setCloseIconVisible(false);
+            viewModel.setSearchViewVisible(false);
+
+            // Reset biến điều khiển menu
+            shouldShowMoreIcon = false;
+
+            // Tùy chỉnh icon điều hướng và menu dựa trên destination
             if (destination.getId() == R.id.movieListFragment) {
                 String mode = arguments != null ? arguments.getString("mode", MovieListFragment.MODE_API) : MovieListFragment.MODE_API;
                 if (mode.equals(MovieListFragment.MODE_API)) {
-                    String currentMovieType = viewModel.getMovieType().getValue();
-                    if (currentMovieType != null) {
-                        getSupportActionBar().setTitle(currentMovieType.replace("_", " ").toUpperCase());
-                    }
+                    binding.toolbarTitle.setText("Movies");
+                    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                    viewModel.setGridIconVisible(true);
+                    shouldShowMoreIcon = true;
                 } else if (mode.equals(MovieListFragment.MODE_FAVORITE)) {
-                    getSupportActionBar().setTitle("Favourite");
+                    binding.toolbarTitle.setText("Favourite");
+                    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                    viewModel.setSearchIconVisible(!viewModel.getIsSearchViewVisible().getValue());
+                    viewModel.setCloseIconVisible(viewModel.getIsSearchViewVisible().getValue());
                 }
+            } else if (destination.getId() == R.id.movieDetailsFragment) {
+                if (arguments != null) {
+                    Movie movie = (Movie) arguments.getSerializable("movie");
+                    if (movie != null) {
+                        binding.toolbarTitle.setText(movie.getTitle());
+                    }
+                }
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            } else if (destination.getId() == R.id.showAllRemindersFragment) {
+                binding.toolbarTitle.setText("All Reminders");
+                getSupportActionBar().setDisplayHomeAsUpEnabled(false);
             } else if (destination.getId() == R.id.settingsFragment) {
-                getSupportActionBar().setTitle("Settings");
+                binding.toolbarTitle.setText("Settings");
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             } else if (destination.getId() == R.id.aboutFragment) {
-                getSupportActionBar().setTitle("About");
+                binding.toolbarTitle.setText("About");
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            }
+
+            // Cập nhật menu để hiển thị hoặc ẩn icon ic_more
+            invalidateOptionsMenu();
+        });
+
+        // Theo dõi danh sách yêu thích để cập nhật badge
+        movieListViewModel.getFavoriteMoviesLiveData().observe(this, favoriteMovies -> {
+            TabLayout.Tab favoriteTab = binding.tabLayout.getTabAt(1);
+            if (favoriteTab != null) {
+                if (favoriteMovies != null && !favoriteMovies.isEmpty()) {
+                    favoriteTab.getOrCreateBadge().setNumber(favoriteMovies.size());
+                    favoriteTab.getBadge().setVisible(true);
+                } else {
+                    favoriteTab.removeBadge();
+                }
             }
         });
+
+        // Load danh sách yêu thích ban đầu
+        movieListViewModel.loadFavoriteMovies();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.movie_type_menu, menu);
-        return true;
+        if (shouldShowMoreIcon) {
+            getMenuInflater().inflate(R.menu.movie_type_menu, menu);
+            return true;
+        }
+        return false;
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                binding.drawerLayout.closeDrawer(GravityCompat.START);
-            } else {
-                binding.drawerLayout.openDrawer(GravityCompat.START);
+            if (navController.getCurrentDestination() != null) {
+                int currentDestinationId = navController.getCurrentDestination().getId();
+                if (currentDestinationId == R.id.movieDetailsFragment) {
+                    navController.navigateUp();
+                } else if (currentDestinationId != R.id.showAllRemindersFragment) {
+                    if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                        binding.drawerLayout.closeDrawer(GravityCompat.START);
+                    } else {
+                        binding.drawerLayout.openDrawer(GravityCompat.START);
+                    }
+                }
             }
             return true;
         }
 
-        // Cập nhật movieType thông qua ViewModel và đồng bộ với SharedPreferences
         String movieType = null;
         String selectedCategory = null;
         if (item.getItemId() == R.id.menu_popular) {
@@ -226,19 +313,10 @@ public class MainActivity extends AppCompatActivity {
             return super.onOptionsItemSelected(item);
         }
 
-        // Update MainViewModel
         viewModel.setMovieType(movieType);
-
-        // Update SharedPreferences and UpdateSettingsUseCase
         if (selectedCategory != null) {
             sharedPreferences.edit().putString("category", selectedCategory).apply();
             updateSettingsUseCase.updateCategory(selectedCategory).subscribe();
-        }
-
-        // Cập nhật tiêu đề ActionBar dựa trên movieType từ ViewModel
-        String currentMovieType = viewModel.getMovieType().getValue();
-        if (currentMovieType != null) {
-            getSupportActionBar().setTitle(currentMovieType.replace("_", " ").toUpperCase());
         }
 
         return true;
@@ -246,6 +324,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onSupportNavigateUp() {
-        return navController.navigateUp() || super.onSupportNavigateUp();
+        return NavigationUI.navigateUp(navController, binding.drawerLayout) || super.onSupportNavigateUp();
     }
 }

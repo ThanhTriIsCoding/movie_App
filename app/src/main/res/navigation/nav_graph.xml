@@ -36,9 +36,7 @@
         android:id="@+id/action_global_movieDetailsFragment"
         app:destination="@id/movieDetailsFragment" />
 
-    <action
-        android:id="@+id/action_global_profileFragment"
-        app:destination="@id/profileFragment" />
+
 
     <action
         android:id="@+id/action_global_showAllRemindersFragment"
@@ -50,11 +48,6 @@
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.moviedetails.MovieDetailFragment"
         android:label="Movie Details" />
 
-    <!-- Profile Fragment -->
-    <fragment
-        android:id="@+id/profileFragment"
-        android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.ProfileFragment"
-        android:label="Profile" />
 
     <!-- Show All Reminders Fragment -->
     <fragment

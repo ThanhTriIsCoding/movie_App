@@ -58,7 +58,7 @@ public class AppModule {
     @Singleton
     AppDatabase provideAppDatabase(@ApplicationContext Context context) {
         return Room.databaseBuilder(context, AppDatabase.class, "movie_database")
-                .fallbackToDestructiveMigration() // This will delete the database and recreate it
+                .fallbackToDestructiveMigration()
                 .build();
     }
 

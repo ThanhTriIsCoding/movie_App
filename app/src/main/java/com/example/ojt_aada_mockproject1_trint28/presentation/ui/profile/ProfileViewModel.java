@@ -9,6 +9,7 @@ import com.example.ojt_aada_mockproject1_trint28.domain.model.Reminder;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetProfileUseCase;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.GetRemindersUseCase;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,9 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
 import android.util.Log;
 
 @HiltViewModel
@@ -37,6 +41,7 @@ public class ProfileViewModel extends ViewModel {
 
     private final MutableLiveData<Boolean> _navigateToShowAllReminders = new MutableLiveData<>();
     public LiveData<Boolean> navigateToShowAllReminders = _navigateToShowAllReminders;
+    private final MutableLiveData<Bitmap> avatar = new MutableLiveData<>();
 
     private final CompositeDisposable disposables = new CompositeDisposable();
 
@@ -54,10 +59,30 @@ public class ProfileViewModel extends ViewModel {
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(
-                                profile -> _profile.setValue(profile),
+                                profile -> {
+                                    _profile.setValue(profile);
+                                    avatar.setValue(base64ToBitmap(profile.getAvatarBase64()));
+                                },
                                 throwable -> _profile.setValue(null)
                         )
         );
+    }
+
+
+    public LiveData<Bitmap> getAvatar() {
+        return avatar;
+    }
+
+
+    private String bitmapToBase64(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        return Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+    }
+
+    private Bitmap base64ToBitmap(String base64String) {
+        byte[] bytes = Base64.decode(base64String, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
     }
 
     private void loadReminders() {

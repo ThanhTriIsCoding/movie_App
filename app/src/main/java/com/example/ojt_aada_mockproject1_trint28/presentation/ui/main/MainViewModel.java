@@ -9,13 +9,16 @@ import javax.inject.Inject;
 public class MainViewModel extends ViewModel {
     private final MutableLiveData<Boolean> isGridMode = new MutableLiveData<>(false);
     private final MutableLiveData<String> movieType = new MutableLiveData<>("popular");
-    private final MutableLiveData<Integer> selectedTabPosition = new MutableLiveData<>(0); // Default to 0 (first tab)
+    private final MutableLiveData<Integer> selectedTabPosition = new MutableLiveData<>(0);
+    private final MutableLiveData<Boolean> isGridIconVisible = new MutableLiveData<>(true);
+    private final MutableLiveData<Boolean> isSearchIconVisible = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> isCloseIconVisible = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> isSearchViewVisible = new MutableLiveData<>(false);
+    private final MutableLiveData<String> searchQuery = new MutableLiveData<>("");
 
     @Inject
     public MainViewModel() {
-        // Set default movie type to "popular"
         movieType.setValue("popular");
-        // Set default selected tab position to 0
         selectedTabPosition.setValue(0);
     }
 
@@ -48,5 +51,52 @@ public class MainViewModel extends ViewModel {
 
     public void setSelectedTabPosition(int position) {
         selectedTabPosition.setValue(position);
+    }
+
+    public LiveData<Boolean> getIsGridIconVisible() {
+        return isGridIconVisible;
+    }
+
+    public void setGridIconVisible(boolean visible) {
+        isGridIconVisible.setValue(visible);
+    }
+
+    public LiveData<Boolean> getIsSearchIconVisible() {
+        return isSearchIconVisible;
+    }
+
+    public void setSearchIconVisible(boolean visible) {
+        isSearchIconVisible.setValue(visible);
+    }
+
+    public LiveData<Boolean> getIsCloseIconVisible() {
+        return isCloseIconVisible;
+    }
+
+    public void setCloseIconVisible(boolean visible) {
+        isCloseIconVisible.setValue(visible);
+    }
+
+    public LiveData<Boolean> getIsSearchViewVisible() {
+        return isSearchViewVisible;
+    }
+
+    public void setSearchViewVisible(boolean visible) {
+        isSearchViewVisible.setValue(visible);
+    }
+
+    public LiveData<String> getSearchQuery() {
+        return searchQuery;
+    }
+
+    public void setSearchQuery(String query) {
+        searchQuery.setValue(query);
+    }
+
+    public void clearSearch() {
+        searchQuery.setValue("");
+        setSearchViewVisible(false);
+        setSearchIconVisible(true);
+        setCloseIconVisible(false);
     }
 }

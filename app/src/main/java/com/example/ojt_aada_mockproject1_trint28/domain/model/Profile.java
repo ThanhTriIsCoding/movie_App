@@ -11,19 +11,19 @@ public class Profile {
     private String email;
     private String birthday;
     private String gender;
-    private String avatarUrl; // Store URL instead of Uri for Firebase
+    private String avatarBase64;
 
     public Profile() {
         // Default constructor required for Firebase
     }
 
-    public Profile(String userId, String name, String email, String birthday, String gender, String avatarUrl) {
+    public Profile(String userId, String name, String email, String birthday, String gender, String avatarBase64) {
         this.userId = userId;
         this.name = name;
         this.email = email;
         this.birthday = birthday;
         this.gender = gender;
-        this.avatarUrl = avatarUrl;
+        this.avatarBase64 = avatarBase64;
     }
 
     public String getUserId() {
@@ -66,16 +66,11 @@ public class Profile {
         this.gender = gender;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
+    public String getAvatarBase64() {
+        return avatarBase64;
     }
 
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
-    // Helper method to convert avatarUrl to Uri for UI binding
-    public Uri getAvatarUri() {
-        return avatarUrl != null ? Uri.parse(avatarUrl) : null;
+    public void setAvatarBase64(String avatarBase64) {
+        this.avatarBase64 = avatarBase64;
     }
 }

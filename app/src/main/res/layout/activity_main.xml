@@ -7,6 +7,16 @@
         <variable
             name="viewModel"
             type="com.example.ojt_aada_mockproject1_trint28.presentation.ui.main.MainViewModel" />
+        <variable
+            name="onGridClick"
+            type="android.view.View.OnClickListener" />
+        <variable
+            name="onSearchClick"
+            type="android.view.View.OnClickListener" />
+        <variable
+            name="onCloseClick"
+            type="android.view.View.OnClickListener" />
+        <import type="android.view.View" />
     </data>
 
     <androidx.drawerlayout.widget.DrawerLayout
@@ -29,7 +39,32 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:titleTextColor="@android:color/white">
 
-                <!-- Nút chuyển đổi List/Grid -->
+                <!-- Title -->
+                <TextView
+                    android:id="@+id/toolbar_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:visibility="@{viewModel.isSearchViewVisible ? View.GONE : View.VISIBLE}"
+                    tools:text="Movies" />
+
+                <!-- Search View (for Favourite tab) -->
+                <EditText
+                    android:id="@+id/search_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:background="@android:color/transparent"
+                    android:hint="Search Favourite Movies"
+                    android:padding="8dp"
+                    android:text="@{viewModel.searchQuery}"
+                    android:textColor="@android:color/white"
+                    android:textColorHint="@android:color/white"
+                    android:visibility="@{viewModel.isSearchViewVisible ? View.VISIBLE : View.GONE}" />
+
+                <!-- Grid/List Toggle Icon -->
                 <ImageView
                     android:id="@+id/change_mode_button"
                     android:layout_width="wrap_content"
@@ -37,7 +72,31 @@
                     android:layout_gravity="end"
                     android:padding="8dp"
                     android:src="@{viewModel.isGridMode ? @drawable/ic_list : @drawable/ic_grid}"
-                    android:onClick="@{() -> viewModel.toggleDisplayMode()}" />
+                    android:visibility="@{viewModel.isGridIconVisible ? View.VISIBLE : View.GONE}"
+                    android:onClick="@{onGridClick}" />
+
+                <!-- Search Icon (for Favourite tab) -->
+                <ImageView
+                    android:id="@+id/search_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_search"
+                    android:visibility="@{viewModel.isSearchIconVisible ? View.VISIBLE : View.GONE}"
+                    android:onClick="@{onSearchClick}" />
+
+                <!-- Close Icon (for Favourite tab when searching) -->
+                <ImageView
+                    android:id="@+id/close_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_close"
+                    android:visibility="@{viewModel.isCloseIconVisible ? View.VISIBLE : View.GONE}"
+                    android:onClick="@{onCloseClick}" />
+
             </androidx.appcompat.widget.Toolbar>
 
             <!-- Fragment Container -->
@@ -65,7 +124,8 @@
                 app:tabIndicatorColor="@android:color/white"
                 app:tabTextColor="@android:color/white"
                 app:tabSelectedTextColor="@android:color/white"
-                app:tabBackground="@color/colorPrimary">
+                app:tabBackground="@color/colorPrimary"
+                app:tabIconTint="@color/white">
 
                 <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"

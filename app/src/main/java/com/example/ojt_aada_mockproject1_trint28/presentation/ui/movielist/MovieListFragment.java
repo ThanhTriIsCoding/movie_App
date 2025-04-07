@@ -24,6 +24,10 @@ import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.presentation.adapter.MovieAdapter;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.main.MainViewModel;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import dagger.hilt.android.AndroidEntryPoint;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
@@ -45,6 +49,7 @@ public class MovieListFragment extends Fragment {
     private boolean isGridMode;
     private String mode;
     private NavController navController;
+    private List<Movie> fullFavoriteMovies; // Lưu danh sách đầy đủ để lọc
 
     public static MovieListFragment newInstance(String mode) {
         MovieListFragment fragment = new MovieListFragment();
@@ -82,11 +87,9 @@ public class MovieListFragment extends Fragment {
         isGridMode = mainViewModel.getIsGridMode().getValue() != null && mainViewModel.getIsGridMode().getValue();
         Log.d("MovieListFragment", "isGridMode: " + isGridMode);
 
-        // Initialize the adapter with both star click and item click listeners
         adapter = new MovieAdapter(isGridMode, (movie, position) -> {
             Log.d("MovieAdapter", "Star clicked for movie: " + movie.getTitle() + " at position: " + position);
             if (!isGridMode) {
-                // Check the current isLiked state in the database before proceeding
                 disposables.add(
                         viewModel.isMovieLiked(movie.getId())
                                 .subscribeOn(Schedulers.io())
@@ -99,7 +102,7 @@ public class MovieListFragment extends Fragment {
                                                         .observeOn(AndroidSchedulers.mainThread())
                                                         .subscribe(() -> {
                                                             Log.d("MovieListFragment", "Movie removed from favorites: " + movie.getTitle());
-                                                            movie.setLiked(false); // Update the isLiked state
+                                                            movie.setLiked(false);
                                                             adapter.notifyItemChanged(position, "isLiked");
                                                             if (mode.equals(MODE_FAVORITE)) {
                                                                 viewModel.loadFavoriteMovies();
@@ -115,7 +118,7 @@ public class MovieListFragment extends Fragment {
                                                         .observeOn(AndroidSchedulers.mainThread())
                                                         .subscribe(() -> {
                                                             Log.d("MovieListFragment", "Movie added to favorites: " + movie.getTitle());
-                                                            movie.setLiked(true); // Update the isLiked state
+                                                            movie.setLiked(true);
                                                             adapter.notifyItemChanged(position, "isLiked");
                                                             if (mode.equals(MODE_FAVORITE)) {
                                                                 viewModel.loadFavoriteMovies();
@@ -131,7 +134,6 @@ public class MovieListFragment extends Fragment {
                 );
             }
         }, movie -> {
-            // Handle item click to navigate to MovieDetailFragment
             Bundle bundle = new Bundle();
             bundle.putSerializable("movie", movie);
             navController.navigate(R.id.action_movieListFragment_to_movieDetailFragment, bundle);
@@ -177,11 +179,40 @@ public class MovieListFragment extends Fragment {
                 }
             });
         } else if (mode.equals(MODE_FAVORITE)) {
+            // Load danh sách yêu thích ban đầu
             viewModel.loadFavoriteMovies();
             viewModel.getFavoriteMoviesLiveData().observe(getViewLifecycleOwner(), movies -> {
                 Log.d("MovieListFragment", "Favorite movies received: " + (movies != null ? movies.size() : "null"));
                 if (movies != null) {
-                    adapter.submitData(getViewLifecycleOwner().getLifecycle(), PagingData.from(movies));
+                    fullFavoriteMovies = new ArrayList<>(movies); // Cập nhật lại danh sách đầy đủ
+                    // Hiển thị danh sách dựa trên searchQuery hiện tại
+                    String currentQuery = mainViewModel.getSearchQuery().getValue();
+                    List<Movie> filteredMovies;
+                    if (currentQuery == null || currentQuery.trim().isEmpty()) {
+                        filteredMovies = new ArrayList<>(fullFavoriteMovies);
+                    } else {
+                        String searchQuery = currentQuery.toLowerCase();
+                        filteredMovies = fullFavoriteMovies.stream()
+                                .filter(movie -> movie.getTitle().toLowerCase().contains(searchQuery))
+                                .collect(Collectors.toList());
+                    }
+                    adapter.submitData(getViewLifecycleOwner().getLifecycle(), PagingData.from(filteredMovies));
+                }
+            });
+
+            // Theo dõi searchQuery để lọc danh sách phim yêu thích
+            mainViewModel.getSearchQuery().observe(getViewLifecycleOwner(), query -> {
+                if (fullFavoriteMovies != null) {
+                    List<Movie> filteredMovies;
+                    if (query == null || query.trim().isEmpty()) {
+                        filteredMovies = new ArrayList<>(fullFavoriteMovies);
+                    } else {
+                        String searchQuery = query.toLowerCase();
+                        filteredMovies = fullFavoriteMovies.stream()
+                                .filter(movie -> movie.getTitle().toLowerCase().contains(searchQuery))
+                                .collect(Collectors.toList());
+                    }
+                    adapter.submitData(getViewLifecycleOwner().getLifecycle(), PagingData.from(filteredMovies));
                 }
             });
         }
