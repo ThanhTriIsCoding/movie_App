@@ -148,28 +148,15 @@
                 android:visibility="@{viewModel.reminders.empty ? View.GONE : View.VISIBLE}"
                 tools:visibility="visible" />
 
-            <!-- Reminder List (Limited to 2 items) -->
-            <LinearLayout
-                android:id="@+id/reminder_container"
+            <!-- Reminder List (RecyclerView) -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_reminders"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:layout_marginHorizontal="16dp"
+                android:nestedScrollingEnabled="false"
                 android:visibility="@{viewModel.reminders.empty ? View.GONE : View.VISIBLE}"
-                tools:visibility="visible">
-
-                <include
-                    layout="@layout/item_reminder"
-                    app:reminder="@{viewModel.reminders.size() > 0 ? viewModel.reminders.get(0) : null}"
-                    app:showPosterAndDelete="@{false}"
-                    android:visibility="@{viewModel.reminders.size() > 0 ? View.VISIBLE : View.GONE}" />
-
-                <include
-                    layout="@layout/item_reminder"
-                    app:reminder="@{viewModel.reminders.size() > 1 ? viewModel.reminders.get(1) : null}"
-                    app:showPosterAndDelete="@{false}"
-                    android:visibility="@{viewModel.reminders.size() > 1 ? View.VISIBLE : View.GONE}" />
-            </LinearLayout>
+                tools:visibility="visible" />
 
             <!-- Show All Button -->
             <Button

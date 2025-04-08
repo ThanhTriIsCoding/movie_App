@@ -1,15 +1,25 @@
 package com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Profile;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Reminder;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ProfileUseCases;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ReminderUseCases;
+import com.example.ojt_aada_mockproject1_trint28.worker.ReminderWorker;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,11 +29,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.util.Base64;
-import android.util.Log;
 
 @HiltViewModel
 public class ProfileViewModel extends ViewModel {
@@ -44,6 +49,7 @@ public class ProfileViewModel extends ViewModel {
     private final MutableLiveData<Bitmap> avatar = new MutableLiveData<>();
 
     private final CompositeDisposable disposables = new CompositeDisposable();
+    private BroadcastReceiver reminderDeletedReceiver;
 
     @Inject
     public ProfileViewModel(ProfileUseCases profileUseCases, ReminderUseCases reminderUseCases) {
@@ -51,6 +57,24 @@ public class ProfileViewModel extends ViewModel {
         this.reminderUseCases = reminderUseCases;
         loadProfile();
         loadReminders();
+    }
+
+    public void registerReminderDeletedReceiver(Context context) {
+        reminderDeletedReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d("ProfileViewModel", "Received reminder deleted broadcast");
+                loadReminders(); // Làm mới danh sách reminders
+            }
+        };
+        LocalBroadcastManager.getInstance(context)
+                .registerReceiver(reminderDeletedReceiver, new IntentFilter(ReminderWorker.ACTION_REMINDER_DELETED));
+    }
+
+    public void unregisterReminderDeletedReceiver(Context context) {
+        if (reminderDeletedReceiver != null) {
+            LocalBroadcastManager.getInstance(context).unregisterReceiver(reminderDeletedReceiver);
+        }
     }
 
     private void loadProfile() {
@@ -68,10 +92,10 @@ public class ProfileViewModel extends ViewModel {
         );
     }
 
-
     public LiveData<Bitmap> getAvatar() {
         return avatar;
     }
+
     private Bitmap base64ToBitmap(String base64String) {
         byte[] bytes = Base64.decode(base64String, Base64.DEFAULT);
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);

@@ -19,6 +19,8 @@ public class ShowAllRemindersAdapter extends RecyclerView.Adapter<ShowAllReminde
 
     private List<Reminder> reminders = new ArrayList<>();
     private OnDeleteClickListener deleteClickListener;
+    private boolean showPoster = true; // Mặc định hiển thị poster
+    private boolean showDeleteButton = true; // Mặc định hiển thị nút xóa
 
     public interface OnDeleteClickListener {
         void onDeleteClick(Reminder reminder);
@@ -31,6 +33,13 @@ public class ShowAllRemindersAdapter extends RecyclerView.Adapter<ShowAllReminde
     public void setReminders(List<Reminder> reminders) {
         this.reminders = reminders != null ? reminders : new ArrayList<>();
         notifyDataSetChanged();
+    }
+
+    // Thêm phương thức để cấu hình chế độ hiển thị
+    public void setDisplayMode(boolean showPoster, boolean showDeleteButton) {
+        this.showPoster = showPoster;
+        this.showDeleteButton = showDeleteButton;
+        notifyDataSetChanged(); // Làm mới toàn bộ adapter để áp dụng chế độ hiển thị mới
     }
 
     @NonNull
@@ -62,7 +71,8 @@ public class ShowAllRemindersAdapter extends RecyclerView.Adapter<ShowAllReminde
 
         void bind(Reminder reminder) {
             binding.setReminder(reminder);
-            binding.setShowPosterAndDelete(true);
+            binding.setShowPoster(showPoster);
+            binding.setShowDeleteButton(showDeleteButton);
             binding.setDeleteClickListener(v -> {
                 if (deleteClickListener != null) {
                     deleteClickListener.onDeleteClick(reminder);

@@ -44,6 +44,7 @@ public class ShowAllRemindersFragment extends Fragment {
 
         viewModel = new ViewModelProvider(this).get(ShowAllRemindersViewModel.class);
         adapter = new ShowAllRemindersAdapter();
+        adapter.setDisplayMode(true, true); // Hiển thị cả poster và nút xóa trong ShowAllRemindersFragment
 
         binding.rvReminders.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.rvReminders.setAdapter(adapter);
@@ -54,41 +55,23 @@ public class ShowAllRemindersFragment extends Fragment {
         });
 
         adapter.setDeleteClickListener(reminder -> {
-            // Show confirmation dialog before deleting
             new AlertDialog.Builder(requireContext())
                     .setTitle("Confirm Deletion")
                     .setMessage("Are you sure you want to delete this reminder?")
-                    .setNegativeButton("No", (dialog, which) -> {
-                        // Dismiss the dialog and do nothing
-                        dialog.dismiss();
-                    })
-                    .setPositiveButton("Yes", (dialog, which) -> {
-                        // Proceed with deletion
-                        viewModel.deleteReminder(reminder);
-                    })
-                    .setCancelable(true) // Allow dismissing the dialog by pressing back
+                    .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+                    .setPositiveButton("Yes", (dialog, which) -> viewModel.deleteReminder(reminder))
+                    .setCancelable(true)
                     .show();
         });
 
-        // Register the broadcast receiver
-        reminderDeletedReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                Log.d("ShowAllRemindersFrag", "Received reminder deleted broadcast");
-                int movieId = intent.getIntExtra(ReminderWorker.KEY_MOVIE_ID, -1);
-                String dateTime = intent.getStringExtra(ReminderWorker.KEY_DATE_TIME);
-                Log.d("ShowAllRemindersFrag", "Deleted reminder: movieId=" + movieId + ", dateTime=" + dateTime);
-                // The UI should already update via LiveData, but we can log or add additional logic here if needed
-            }
-        };
-        LocalBroadcastManager.getInstance(requireContext())
-                .registerReceiver(reminderDeletedReceiver, new IntentFilter(ReminderWorker.ACTION_REMINDER_DELETED));
+        // Đăng ký BroadcastReceiver
+        viewModel.registerReminderDeletedReceiver(requireContext());
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(reminderDeletedReceiver);
+        viewModel.unregisterReminderDeletedReceiver(requireContext());
         binding = null;
     }
 }

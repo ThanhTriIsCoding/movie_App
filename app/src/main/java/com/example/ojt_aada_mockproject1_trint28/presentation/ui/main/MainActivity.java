@@ -22,11 +22,14 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ActivityMainBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.NavHeaderBinding;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
+import com.example.ojt_aada_mockproject1_trint28.domain.model.Reminder;
+import com.example.ojt_aada_mockproject1_trint28.presentation.adapter.ShowAllRemindersAdapter;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListViewModel;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.EditProfileActivity;
@@ -34,6 +37,8 @@ import com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.Profile
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.SettingsUseCases;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
+
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -49,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private NavController navController;
     private boolean shouldShowMoreIcon = false;
     private Movie lastSelectedMovie;
+    private ShowAllRemindersAdapter remindersAdapter;
 
     @Inject
     SharedPreferences sharedPreferences;
@@ -115,9 +121,21 @@ public class MainActivity extends AppCompatActivity {
         headerBinding.setViewModel(profileViewModel);
         headerBinding.setLifecycleOwner(this);
 
+        // Thiết lập RecyclerView trong Drawer
+        remindersAdapter = new ShowAllRemindersAdapter();
+        remindersAdapter.setDeleteClickListener(null); // Không cho phép xóa trong Drawer
+        remindersAdapter.setDisplayMode(false, false); // Hiển thị poster, ẩn nút xóa
+        headerBinding.rvReminders.setLayoutManager(new LinearLayoutManager(this));
+        headerBinding.rvReminders.setAdapter(remindersAdapter);
+
         profileViewModel.reminders.observe(this, reminders -> {
             Log.d("MainActivity", "ProfileViewModel reminders updated: " + reminders.size() + " reminders");
+            List<Reminder> limitedReminders = reminders.size() > 2 ? reminders.subList(0, 2) : reminders;
+            remindersAdapter.setReminders(limitedReminders);
         });
+
+        // Đăng ký BroadcastReceiver cho ProfileViewModel
+        profileViewModel.registerReminderDeletedReceiver(this);
 
         profileViewModel.navigateToEditProfile.observe(this, shouldNavigate -> {
             if (Boolean.TRUE.equals(shouldNavigate)) {
@@ -227,7 +245,10 @@ public class MainActivity extends AppCompatActivity {
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             } else if (destination.getId() == R.id.showAllRemindersFragment) {
                 binding.toolbarTitle.setText("All Reminders");
-                getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    binding.drawerLayout.closeDrawer(GravityCompat.START);
+                }
             } else if (destination.getId() == R.id.settingsFragment) {
                 binding.toolbarTitle.setText("Settings");
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -271,17 +292,21 @@ public class MainActivity extends AppCompatActivity {
                 if (currentDestinationId == R.id.movieDetailsFragment) {
                     viewModel.setIsInMovieDetail(false);
                     lastSelectedMovie = null;
-                    // Xóa MovieDetailFragment khỏi back stack
                     navController.popBackStack(R.id.movieDetailsFragment, true);
-                    // Điều hướng về MovieListFragment với mode là MODE_API
                     Bundle args = new Bundle();
                     args.putString("mode", MovieListFragment.MODE_API);
                     navController.navigate(R.id.movieListFragment, args);
-                    // Chọn lại tab Movies
                     viewModel.setSelectedTabPosition(0);
                     TabLayout.Tab tab = binding.tabLayout.getTabAt(0);
                     if (tab != null) {
                         tab.select();
+                    }
+                } else if (currentDestinationId == R.id.showAllRemindersFragment) {
+                    Bundle args = new Bundle();
+                    args.putString("mode", MovieListFragment.MODE_API);
+                    navController.navigate(R.id.movieListFragment, args);
+                    if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                        binding.drawerLayout.closeDrawer(GravityCompat.START);
                     }
                 } else if (currentDestinationId != R.id.showAllRemindersFragment) {
                     if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -324,5 +349,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onSupportNavigateUp() {
         return NavigationUI.navigateUp(navController, binding.drawerLayout) || super.onSupportNavigateUp();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        profileViewModel.unregisterReminderDeletedReceiver(this);
     }
 }
