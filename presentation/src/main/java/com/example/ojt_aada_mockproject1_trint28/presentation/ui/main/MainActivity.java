@@ -54,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
     private MovieListViewModel movieListViewModel;
     private NavController navController;
     private boolean shouldShowMoreIcon = false;
-    private Movie lastSelectedMovie;
     private ShowAllRemindersAdapter remindersAdapter;
 
     @Inject
@@ -180,13 +179,27 @@ public class MainActivity extends AppCompatActivity {
                 viewModel.setSelectedTabPosition(tab.getPosition());
                 switch (tab.getPosition()) {
                     case 0: // Tab Movies
-                        if (viewModel.getIsInMovieDetail().getValue() != null && viewModel.getIsInMovieDetail().getValue() && lastSelectedMovie != null) {
-                            Bundle args = new Bundle();
-                            args.putSerializable("movie", lastSelectedMovie);
-                            navController.navigate(R.id.action_global_movieDetailsFragment, args);
+                        String modeApi = MovieListFragment.MODE_API;
+                        if (viewModel.getIsInMovieDetail(modeApi).getValue() != null && viewModel.getIsInMovieDetail(modeApi).getValue()) {
+                            Movie lastMovie = viewModel.getLastSelectedMovie(modeApi).getValue();
+                            if (lastMovie != null) {
+                                Bundle args = new Bundle();
+                                args.putSerializable("movie", lastMovie);
+                                navController.navigate(R.id.action_global_movieDetailsFragment, args);
+                            } else {
+                                Bundle args = new Bundle();
+                                args.putString("mode", modeApi);
+                                if (navController.getCurrentDestination().getId() == R.id.settingsFragment) {
+                                    navController.navigate(R.id.action_settingsFragment_to_movieListFragment, args);
+                                } else if (navController.getCurrentDestination().getId() == R.id.aboutFragment) {
+                                    navController.navigate(R.id.action_aboutFragment_to_movieListFragment, args);
+                                } else {
+                                    navController.navigate(R.id.movieListFragment, args);
+                                }
+                            }
                         } else {
                             Bundle args = new Bundle();
-                            args.putString("mode", MovieListFragment.MODE_API);
+                            args.putString("mode", modeApi);
                             if (navController.getCurrentDestination().getId() == R.id.settingsFragment) {
                                 navController.navigate(R.id.action_settingsFragment_to_movieListFragment, args);
                             } else if (navController.getCurrentDestination().getId() == R.id.aboutFragment) {
@@ -197,14 +210,34 @@ public class MainActivity extends AppCompatActivity {
                         }
                         break;
                     case 1: // Tab Favourite
-                        Bundle args = new Bundle();
-                        args.putString("mode", MovieListFragment.MODE_FAVORITE);
-                        if (navController.getCurrentDestination().getId() == R.id.settingsFragment) {
-                            navController.navigate(R.id.action_settingsFragment_to_movieListFragment, args);
-                        } else if (navController.getCurrentDestination().getId() == R.id.aboutFragment) {
-                            navController.navigate(R.id.action_aboutFragment_to_movieListFragment, args);
+                        String modeFavorite = MovieListFragment.MODE_FAVORITE;
+                        if (viewModel.getIsInMovieDetail(modeFavorite).getValue() != null && viewModel.getIsInMovieDetail(modeFavorite).getValue()) {
+                            Movie lastMovie = viewModel.getLastSelectedMovie(modeFavorite).getValue();
+                            if (lastMovie != null) {
+                                Bundle args = new Bundle();
+                                args.putSerializable("movie", lastMovie);
+                                navController.navigate(R.id.action_global_movieDetailsFragment, args);
+                            } else {
+                                Bundle args = new Bundle();
+                                args.putString("mode", modeFavorite);
+                                if (navController.getCurrentDestination().getId() == R.id.settingsFragment) {
+                                    navController.navigate(R.id.action_settingsFragment_to_movieListFragment, args);
+                                } else if (navController.getCurrentDestination().getId() == R.id.aboutFragment) {
+                                    navController.navigate(R.id.action_aboutFragment_to_movieListFragment, args);
+                                } else {
+                                    navController.navigate(R.id.movieListFragment, args);
+                                }
+                            }
                         } else {
-                            navController.navigate(R.id.movieListFragment, args);
+                            Bundle args = new Bundle();
+                            args.putString("mode", modeFavorite);
+                            if (navController.getCurrentDestination().getId() == R.id.settingsFragment) {
+                                navController.navigate(R.id.action_settingsFragment_to_movieListFragment, args);
+                            } else if (navController.getCurrentDestination().getId() == R.id.aboutFragment) {
+                                navController.navigate(R.id.action_aboutFragment_to_movieListFragment, args);
+                            } else {
+                                navController.navigate(R.id.movieListFragment, args);
+                            }
                         }
                         break;
                     case 2: // Tab Settings
@@ -268,7 +301,10 @@ public class MainActivity extends AppCompatActivity {
                     Movie movie = (Movie) arguments.getSerializable("movie");
                     if (movie != null) {
                         binding.toolbarTitle.setText(movie.getTitle());
-                        lastSelectedMovie = movie;
+                        String mode = viewModel.getSelectedTabPosition().getValue() == 1 ? MovieListFragment.MODE_FAVORITE : MovieListFragment.MODE_API;
+                        viewModel.setLastSelectedMovie(mode, movie);
+                        // Đặt trạng thái isInMovieDetail cho tab tương ứng
+                        viewModel.setIsInMovieDetail(mode, true);
                     }
                 }
                 getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -319,13 +355,14 @@ public class MainActivity extends AppCompatActivity {
             if (navController.getCurrentDestination() != null) {
                 int currentDestinationId = navController.getCurrentDestination().getId();
                 if (currentDestinationId == R.id.movieDetailsFragment) {
-                    viewModel.setIsInMovieDetail(false);
-                    lastSelectedMovie = null;
+                    String mode = viewModel.getSelectedTabPosition().getValue() == 1 ? MovieListFragment.MODE_FAVORITE : MovieListFragment.MODE_API;
+                    viewModel.setIsInMovieDetail(mode, false);
+                    viewModel.clearLastSelectedMovie(mode);
                     Bundle args = new Bundle();
-                    args.putString("mode", MovieListFragment.MODE_API);
+                    args.putString("mode", mode);
                     navController.navigate(R.id.action_movieDetailsFragment_to_movieListFragment, args);
-                    viewModel.setSelectedTabPosition(0);
-                    TabLayout.Tab tab = binding.tabLayout.getTabAt(0);
+                    viewModel.setSelectedTabPosition(mode.equals(MovieListFragment.MODE_FAVORITE) ? 1 : 0);
+                    TabLayout.Tab tab = binding.tabLayout.getTabAt(mode.equals(MovieListFragment.MODE_FAVORITE) ? 1 : 0);
                     if (tab != null) {
                         tab.select();
                     }
@@ -379,22 +416,31 @@ public class MainActivity extends AppCompatActivity {
         return NavigationUI.navigateUp(navController, binding.drawerLayout) || super.onSupportNavigateUp();
     }
 
-    // Override onBackPressed để xử lý nút "Back" của Android
     @Override
     public void onBackPressed() {
         if (navController.getCurrentDestination() != null) {
             int currentDestinationId = navController.getCurrentDestination().getId();
-            // Kiểm tra nếu đang ở movieListFragment
-            if (currentDestinationId == R.id.movieListFragment) {
+            if (currentDestinationId == R.id.movieDetailsFragment) {
+                String mode = viewModel.getSelectedTabPosition().getValue() == 1 ? MovieListFragment.MODE_FAVORITE : MovieListFragment.MODE_API;
+                viewModel.setIsInMovieDetail(mode, false);
+                viewModel.clearLastSelectedMovie(mode);
+                Bundle args = new Bundle();
+                args.putString("mode", mode);
+                navController.navigate(R.id.action_movieDetailsFragment_to_movieListFragment, args);
+                viewModel.setSelectedTabPosition(mode.equals(MovieListFragment.MODE_FAVORITE) ? 1 : 0);
+                TabLayout.Tab tab = binding.tabLayout.getTabAt(mode.equals(MovieListFragment.MODE_FAVORITE) ? 1 : 0);
+                if (tab != null) {
+                    tab.select();
+                }
+                return;
+            } else if (currentDestinationId == R.id.movieListFragment) {
                 Bundle args = navController.getCurrentBackStackEntry().getArguments();
                 String mode = args != null ? args.getString("mode", MovieListFragment.MODE_API) : MovieListFragment.MODE_API;
-                // Nếu đang ở mode "favorite", thoát ứng dụng
                 if (mode.equals(MovieListFragment.MODE_FAVORITE)) {
                     finish(); // Thoát ứng dụng
                     return;
                 }
             }
-            // Nếu không phải trường hợp đặc biệt, để NavigationUI xử lý
             if (NavigationUI.navigateUp(navController, binding.drawerLayout)) {
                 return;
             }

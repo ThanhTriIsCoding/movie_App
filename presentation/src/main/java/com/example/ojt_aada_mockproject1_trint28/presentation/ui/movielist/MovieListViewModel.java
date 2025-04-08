@@ -8,7 +8,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.paging.PagingData;
 
-
 import com.example.domain.model.Movie;
 import com.example.domain.model.Settings;
 import com.example.domain.usecase.MovieUseCases;
@@ -33,6 +32,8 @@ public class MovieListViewModel extends ViewModel {
     private Settings currentSettings;
     private final MutableLiveData<Integer> scrollPosition = new MutableLiveData<>(0);
     private final MutableLiveData<List<Movie>> favoriteMovies = new MutableLiveData<>();
+    private final MutableLiveData<Movie> navigateToMovieDetail = new MutableLiveData<>();
+    private final MutableLiveData<Integer> notifyItemChangedPosition = new MutableLiveData<>();
 
     @Inject
     public MovieListViewModel(
@@ -119,5 +120,70 @@ public class MovieListViewModel extends ViewModel {
                     Log.e("MovieListViewModel", "Error loading favorite movies: " + throwable.getMessage());
                     favoriteMovies.postValue(null);
                 });
+    }
+
+    public void onMovieClicked(Movie movie) {
+        navigateToMovieDetail.setValue(movie);
+    }
+
+    @SuppressLint("CheckResult")
+    public void onStarClicked(Movie movie, int position) {
+        isMovieLiked(movie.getId())
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(isLiked -> {
+                    if (isLiked) {
+                        removeFavoriteMovie(movie)
+                                .subscribeOn(Schedulers.io())
+                                .subscribe(() -> {
+                                    Log.d("MovieListViewModel", "Movie removed from favorites: " + movie.getTitle());
+                                    movie.setLiked(false);
+                                    notifyItemChangedPosition.postValue(position);
+                                    if (isFavoriteMode()) {
+                                        loadFavoriteMovies();
+                                    }
+                                }, throwable -> {
+                                    Log.e("MovieListViewModel", "Error removing movie: " + throwable.getMessage());
+                                });
+                    } else {
+                        addFavoriteMovie(movie)
+                                .subscribeOn(Schedulers.io())
+                                .subscribe(() -> {
+                                    Log.d("MovieListViewModel", "Movie added to favorites: " + movie.getTitle());
+                                    movie.setLiked(true);
+                                    notifyItemChangedPosition.postValue(position);
+                                    if (isFavoriteMode()) {
+                                        loadFavoriteMovies();
+                                    }
+                                }, throwable -> {
+                                    Log.e("MovieListViewModel", "Error adding movie: " + throwable.getMessage());
+                                });
+                    }
+                }, throwable -> {
+                    Log.e("MovieListViewModel", "Error checking isLiked: " + throwable.getMessage());
+                });
+    }
+
+    public LiveData<Movie> getNavigateToMovieDetail() {
+        return navigateToMovieDetail;
+    }
+
+    public LiveData<Integer> getNotifyItemChangedPosition() {
+        return notifyItemChangedPosition;
+    }
+
+    // Thêm phương thức để reset navigateToMovieDetail
+    public void resetNavigateToMovieDetail() {
+        navigateToMovieDetail.setValue(null);
+    }
+
+    private String mode;
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
+    private boolean isFavoriteMode() {
+        return MovieListFragment.MODE_FAVORITE.equals(mode);
     }
 }

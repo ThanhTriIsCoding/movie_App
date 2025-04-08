@@ -51,7 +51,7 @@ public class MovieListFragment extends Fragment {
     private List<Movie> fullFavoriteMovies;
     private RecyclerView.OnScrollListener scrollListener;
     private boolean hasRestoredScrollPosition = false;
-    private int pageSize = 20; // Giả sử mỗi trang có 20 phần tử
+    private int pageSize = 20;
 
     public static MovieListFragment newInstance(String mode) {
         MovieListFragment fragment = new MovieListFragment();
@@ -86,65 +86,35 @@ public class MovieListFragment extends Fragment {
         viewModel = new ViewModelProvider(this).get(MovieListViewModel.class);
         mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
 
+        viewModel.setMode(mode);
+
         isGridMode = mainViewModel.getIsGridMode().getValue() != null && mainViewModel.getIsGridMode().getValue();
         Log.d("MovieListFragment", "Initial isGridMode: " + isGridMode);
 
-        adapter = new MovieAdapter(isGridMode, (movie, position) -> {
-            Log.d("MovieAdapter", "Star clicked for movie: " + movie.getTitle() + " at position: " + position);
-            if (!isGridMode) {
-                disposables.add(
-                        viewModel.isMovieLiked(movie.getId())
-                                .subscribeOn(Schedulers.io())
-                                .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe(isLiked -> {
-                                    if (isLiked) {
-                                        disposables.add(
-                                                viewModel.removeFavoriteMovie(movie)
-                                                        .subscribeOn(Schedulers.io())
-                                                        .observeOn(AndroidSchedulers.mainThread())
-                                                        .subscribe(() -> {
-                                                            Log.d("MovieListFragment", "Movie removed from favorites: " + movie.getTitle());
-                                                            movie.setLiked(false);
-                                                            adapter.notifyItemChanged(position, "isLiked");
-                                                            if (mode.equals(MODE_FAVORITE)) {
-                                                                viewModel.loadFavoriteMovies();
-                                                            }
-                                                        }, throwable -> {
-                                                            Log.e("MovieListFragment", "Error removing movie: " + throwable.getMessage());
-                                                        })
-                                        );
-                                    } else {
-                                        disposables.add(
-                                                viewModel.addFavoriteMovie(movie)
-                                                        .subscribeOn(Schedulers.io())
-                                                        .observeOn(AndroidSchedulers.mainThread())
-                                                        .subscribe(() -> {
-                                                            Log.d("MovieListFragment", "Movie added to favorites: " + movie.getTitle());
-                                                            movie.setLiked(true);
-                                                            adapter.notifyItemChanged(position, "isLiked");
-                                                            if (mode.equals(MODE_FAVORITE)) {
-                                                                viewModel.loadFavoriteMovies();
-                                                            }
-                                                        }, throwable -> {
-                                                            Log.e("MovieListFragment", "Error adding movie: " + throwable.getMessage());
-                                                        })
-                                        );
-                                    }
-                                }, throwable -> {
-                                    Log.e("MovieListFragment", "Error checking isLiked: " + throwable.getMessage());
-                                })
-                );
-            }
-        }, movie -> {
-            Bundle bundle = new Bundle();
-            bundle.putSerializable("movie", movie);
-            mainViewModel.setIsInMovieDetail(true);
-            navController.navigate(R.id.action_movieListFragment_to_movieDetailFragment, bundle);
-        });
+        adapter = new MovieAdapter(isGridMode, viewModel);
 
         binding.recyclerView.setAdapter(adapter);
         binding.recyclerView.setHasFixedSize(true);
         switchLayoutManager(isGridMode);
+
+        // Quan sát điều hướng đến MovieDetailFragment
+        viewModel.getNavigateToMovieDetail().observe(getViewLifecycleOwner(), movie -> {
+            if (movie != null) {
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("movie", movie);
+                mainViewModel.setIsInMovieDetail(mode, true);
+                navController.navigate(R.id.action_movieListFragment_to_movieDetailFragment, bundle);
+                // Gọi phương thức reset trong ViewModel
+                viewModel.resetNavigateToMovieDetail();
+            }
+        });
+
+        // Quan sát vị trí cần cập nhật trong RecyclerView
+        viewModel.getNotifyItemChangedPosition().observe(getViewLifecycleOwner(), position -> {
+            if (position != null) {
+                adapter.notifyItemChanged(position, "isLiked");
+            }
+        });
 
         binding.swipeRefreshLayout.setOnRefreshListener(() -> {
             if (mode.equals(MODE_API)) {

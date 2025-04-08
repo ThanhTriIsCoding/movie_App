@@ -28,9 +28,14 @@ public class MainViewModel extends ViewModel {
     private final MutableLiveData<List<Movie>> loadedMoviesApi = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<List<Movie>> loadedMoviesFavorite = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Boolean> shouldResetPosition = new MutableLiveData<>(false);
-    private final MutableLiveData<Boolean> isInMovieDetail = new MutableLiveData<>(false);
     private final MutableLiveData<String> lastMovieTypeApi = new MutableLiveData<>("popular");
     private final MutableLiveData<String> lastMovieTypeFavorite = new MutableLiveData<>("favorite");
+    private final MutableLiveData<Movie> lastSelectedMovieApi = new MutableLiveData<>();
+    private final MutableLiveData<Movie> lastSelectedMovieFavorite = new MutableLiveData<>();
+
+    // Thêm hai biến để theo dõi trạng thái isInMovieDetail riêng biệt cho từng tab
+    private final MutableLiveData<Boolean> isInMovieDetailApi = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> isInMovieDetailFavorite = new MutableLiveData<>(false);
 
     @Inject
     public MainViewModel() {
@@ -163,12 +168,18 @@ public class MainViewModel extends ViewModel {
         shouldResetPosition.setValue(reset);
     }
 
-    public LiveData<Boolean> getIsInMovieDetail() {
-        return isInMovieDetail;
+    // Xóa phương thức getIsInMovieDetail và setIsInMovieDetail cũ
+    // Thay bằng các phương thức riêng biệt cho từng tab
+    public LiveData<Boolean> getIsInMovieDetail(String mode) {
+        return mode.equals(MovieListFragment.MODE_API) ? isInMovieDetailApi : isInMovieDetailFavorite;
     }
 
-    public void setIsInMovieDetail(boolean isInDetail) {
-        isInMovieDetail.setValue(isInDetail);
+    public void setIsInMovieDetail(String mode, boolean isInDetail) {
+        if (mode.equals(MovieListFragment.MODE_API)) {
+            isInMovieDetailApi.setValue(isInDetail);
+        } else {
+            isInMovieDetailFavorite.setValue(isInDetail);
+        }
     }
 
     public LiveData<String> getLastMovieType(String mode) {
@@ -180,6 +191,26 @@ public class MainViewModel extends ViewModel {
             lastMovieTypeApi.setValue(movieType);
         } else {
             lastMovieTypeFavorite.setValue(movieType);
+        }
+    }
+
+    public LiveData<Movie> getLastSelectedMovie(String mode) {
+        return mode.equals(MovieListFragment.MODE_API) ? lastSelectedMovieApi : lastSelectedMovieFavorite;
+    }
+
+    public void setLastSelectedMovie(String mode, Movie movie) {
+        if (mode.equals(MovieListFragment.MODE_API)) {
+            lastSelectedMovieApi.setValue(movie);
+        } else {
+            lastSelectedMovieFavorite.setValue(movie);
+        }
+    }
+
+    public void clearLastSelectedMovie(String mode) {
+        if (mode.equals(MovieListFragment.MODE_API)) {
+            lastSelectedMovieApi.setValue(null);
+        } else {
+            lastSelectedMovieFavorite.setValue(null);
         }
     }
 }

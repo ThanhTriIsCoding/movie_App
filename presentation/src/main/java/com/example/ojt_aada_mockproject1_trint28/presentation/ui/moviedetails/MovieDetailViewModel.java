@@ -3,8 +3,6 @@ package com.example.ojt_aada_mockproject1_trint28.presentation.ui.moviedetails;
 import androidx.paging.PagingData;
 
 
-import com.example.data.remote.model.MovieDetailResponse;
-import com.example.data.repository.ReminderRepository;
 import com.example.domain.model.CastCrew;
 import com.example.domain.model.Movie;
 import com.example.domain.model.MovieDetails;
@@ -95,11 +93,7 @@ public class MovieDetailViewModel extends androidx.lifecycle.ViewModel {
                     return conflictingReminders;
                 });
     }
-
-    // Expose ReminderRepository for conflict checking
-    public ReminderRepository getReminderRepository() {
-        // Note: Truy cập trực tiếp ReminderRepository từ ReminderUseCases không được khuyến nghị.
-        // Thay vào đó, bạn nên thêm một phương thức trong ReminderUseCases để lấy reminders theo movieId và dateTime.
-        throw new UnsupportedOperationException("Direct access to ReminderRepository is not supported. Use ReminderUseCases instead.");
-    }
 }
+
+    // Expose ReminderRepository for conflict checking}
+// }

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ItemMovieBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ItemMovieGridBinding;
+import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListViewModel;
 
 import java.util.List;
 
@@ -21,22 +22,12 @@ public class MovieAdapter extends PagingDataAdapter<Movie, RecyclerView.ViewHold
     private static final int VIEW_TYPE_GRID = 2;
 
     private boolean isGridMode;
-    private final OnStarClickListener starClickListener;
-    private final OnItemClickListener itemClickListener;
+    private final MovieListViewModel viewModel;
 
-    public interface OnStarClickListener {
-        void onStarClick(Movie movie, int position);
-    }
-
-    public interface OnItemClickListener {
-        void onItemClick(Movie movie);
-    }
-
-    public MovieAdapter(boolean isGridMode, OnStarClickListener starClickListener, OnItemClickListener itemClickListener) {
+    public MovieAdapter(boolean isGridMode, MovieListViewModel viewModel) {
         super(DIFF_CALLBACK);
         this.isGridMode = isGridMode;
-        this.starClickListener = starClickListener;
-        this.itemClickListener = itemClickListener;
+        this.viewModel = viewModel;
     }
 
     public void setGridMode(boolean isGridMode) {
@@ -83,7 +74,7 @@ public class MovieAdapter extends PagingDataAdapter<Movie, RecyclerView.ViewHold
                 ItemMovieBinding binding = ((ListViewHolder) holder).binding;
                 for (Object payload : payloads) {
                     if ("isLiked".equals(payload)) {
-                        binding.setMovie(movie); // Update the isLiked state
+                        binding.setMovie(movie);
                         binding.executePendingBindings();
                     }
                 }
@@ -97,22 +88,12 @@ public class MovieAdapter extends PagingDataAdapter<Movie, RecyclerView.ViewHold
         ListViewHolder(ItemMovieBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
-
-            // Set click listener for the entire item (excluding the star)
-            binding.getRoot().setOnClickListener(v -> {
-                int position = getAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    Movie movie = getItem(position);
-                    if (movie != null) {
-                        itemClickListener.onItemClick(movie);
-                    }
-                }
-            });
         }
 
         void bind(Movie movie, int position) {
             binding.setMovie(movie);
-            binding.setStarClickListener((view) -> starClickListener.onStarClick(movie, position));
+            binding.setViewModel(viewModel);
+            binding.setPosition(position);
             binding.executePendingBindings();
         }
     }
@@ -124,13 +105,12 @@ public class MovieAdapter extends PagingDataAdapter<Movie, RecyclerView.ViewHold
             super(binding.getRoot());
             this.binding = binding;
 
-            // Set click listener for the entire item
-            binding.getRoot().setOnClickListener(v -> {
+                binding.getRoot().setOnClickListener(v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     Movie movie = getItem(position);
                     if (movie != null) {
-                        itemClickListener.onItemClick(movie);
+                        viewModel.onMovieClicked(movie);
                     }
                 }
             });
