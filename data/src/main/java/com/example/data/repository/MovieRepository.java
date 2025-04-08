@@ -26,6 +26,8 @@ import io.reactivex.rxjava3.core.Single;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.inject.Named;
+
 public class MovieRepository implements IMovieRepository {
     private final MovieDao movieDao;
     private final ApiService apiService;
@@ -35,7 +37,7 @@ public class MovieRepository implements IMovieRepository {
     private String posterSize = "w500";
     private String profileSize = "w185";
 
-    public MovieRepository(ApiService apiService, SettingsUseCases settingsUseCases, String apiKey, MovieDao movieDao) {
+    public MovieRepository(ApiService apiService, SettingsUseCases settingsUseCases, @Named("apiKey") String apiKey, MovieDao movieDao) {
         this.apiService = apiService;
         this.settingsUseCases = settingsUseCases;
         this.apiKey = apiKey;

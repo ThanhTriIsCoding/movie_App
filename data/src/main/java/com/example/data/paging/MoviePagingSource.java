@@ -1,5 +1,7 @@
 package com.example.data.paging;
 
+import android.os.Build;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.paging.PagingState;
@@ -67,22 +69,25 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
         return request
                 .subscribeOn(Schedulers.io())
                 .flatMap(response -> {
-                    List<Single<Movie>> movieSingles = response.getResults().stream()
-                            .map(movieResponse -> {
-                                Movie movie = mapToDomain(movieResponse);
-                                return movieDao.isMovieLiked(movie.getId(), userId)
-                                        .map(count -> new Movie(
-                                                movie.getId(),
-                                                movie.getTitle(),
-                                                movie.getOverview(),
-                                                movie.getReleaseDate(),
-                                                movie.getVoteAverage(),
-                                                movie.isAdult(),
-                                                movie.getPosterUrl(),
-                                                count > 0
-                                        ));
-                            })
-                            .collect(Collectors.toList());
+                    List<Single<Movie>> movieSingles = null;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        movieSingles = response.getResults().stream()
+                                .map(movieResponse -> {
+                                    Movie movie = mapToDomain(movieResponse);
+                                    return movieDao.isMovieLiked(movie.getId(), userId)
+                                            .map(count -> new Movie(
+                                                    movie.getId(),
+                                                    movie.getTitle(),
+                                                    movie.getOverview(),
+                                                    movie.getReleaseDate(),
+                                                    movie.getVoteAverage(),
+                                                    movie.isAdult(),
+                                                    movie.getPosterUrl(),
+                                                    count > 0
+                                            ));
+                                })
+                                .collect(Collectors.toList());
+                    }
 
                     return Single.zip(movieSingles, objects -> {
                         List<Movie> movies = new ArrayList<>();
@@ -93,25 +98,28 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
                     });
                 })
                 .map(movies -> {
-                    List<Movie> filteredMovies = movies.stream()
-                            .filter(movie -> {
-                                boolean matchesRating = movie.getVoteAverage() >= settings.getMinRating();
-                                boolean matchesYear = true;
-                                try {
-                                    String releaseDate = movie.getReleaseDate();
-                                    if (releaseDate != null && !releaseDate.isEmpty()) {
-                                        int year = Integer.parseInt(releaseDate.split("-")[0]);
-                                        matchesYear = year >= settings.getReleaseYear();
+                    List<Movie> filteredMovies = null;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        filteredMovies = movies.stream()
+                                .filter(movie -> {
+                                    boolean matchesRating = movie.getVoteAverage() >= settings.getMinRating();
+                                    boolean matchesYear = true;
+                                    try {
+                                        String releaseDate = movie.getReleaseDate();
+                                        if (releaseDate != null && !releaseDate.isEmpty()) {
+                                            int year = Integer.parseInt(releaseDate.split("-")[0]);
+                                            matchesYear = year >= settings.getReleaseYear();
+                                        }
+                                    } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+                                        matchesYear = false;
                                     }
-                                } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-                                    matchesYear = false;
-                                }
-                                return matchesRating && matchesYear;
-                            })
-                            .sorted(settings.getSortBy().equals("rating") ?
-                                    Comparator.comparing(Movie::getVoteAverage).reversed() :
-                                    Comparator.comparing(Movie::getReleaseDate, Comparator.nullsLast(String::compareTo)).reversed())
-                            .collect(Collectors.toList());
+                                    return matchesRating && matchesYear;
+                                })
+                                .sorted(settings.getSortBy().equals("rating") ?
+                                        Comparator.comparing(Movie::getVoteAverage).reversed() :
+                                        Comparator.comparing(Movie::getReleaseDate, Comparator.nullsLast(String::compareTo)).reversed())
+                                .collect(Collectors.toList());
+                    }
 
                     System.out.println("MoviePagingSource: Loaded " + movies.size() + " movies, filtered to " + filteredMovies.size() + " movies for page " + page);
                     Integer nextKey = filteredMovies.isEmpty() ? null : page + 1;
