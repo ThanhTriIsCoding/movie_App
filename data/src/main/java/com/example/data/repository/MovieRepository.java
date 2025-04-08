@@ -1,5 +1,7 @@
 package com.example.data.repository;
 
+import android.os.Build;
+
 import androidx.paging.Pager;
 import androidx.paging.PagingConfig;
 import androidx.paging.PagingData;
@@ -78,10 +80,13 @@ public class MovieRepository implements IMovieRepository {
 
     @Override
     public Flowable<List<Movie>> getFavoriteMovies(int userId) {
-        return movieDao.getFavoriteMovies(userId)
-                .map(entities -> entities.stream()
-                        .map(this::toDomainModel)
-                        .collect(Collectors.toList()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return movieDao.getFavoriteMovies(userId)
+                    .map(entities -> entities.stream()
+                            .map(this::toDomainModel)
+                            .collect(Collectors.toList()));
+        }
+        return null;
     }
 
     @Override

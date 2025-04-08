@@ -1,5 +1,7 @@
 package com.example.ojt_aada_mockproject1_trint28.presentation.ui.moviedetails;
 
+import android.util.Log;
+
 import androidx.paging.PagingData;
 
 
@@ -81,8 +83,9 @@ public class MovieDetailViewModel extends androidx.lifecycle.ViewModel {
         return reminderUseCases.addReminder(reminder);
     }
 
-    public Flowable<List<Reminder>> checkReminderConflict(int movieId, String dateTime) {
+    public Single<List<Reminder>> checkReminderConflict(int movieId, String dateTime) {
         return reminderUseCases.getReminders()
+                .firstOrError() // Lấy giá trị đầu tiên từ Flowable và chuyển thành Single
                 .map(reminders -> {
                     List<Reminder> conflictingReminders = new ArrayList<>();
                     for (Reminder reminder : reminders) {
@@ -90,10 +93,8 @@ public class MovieDetailViewModel extends androidx.lifecycle.ViewModel {
                             conflictingReminders.add(reminder);
                         }
                     }
+                    Log.d("MovieDetailViewModel", "Checking conflict: movieId=" + movieId + ", dateTime=" + dateTime + ", found=" + conflictingReminders.size());
                     return conflictingReminders;
                 });
     }
 }
-
-    // Expose ReminderRepository for conflict checking}
-// }

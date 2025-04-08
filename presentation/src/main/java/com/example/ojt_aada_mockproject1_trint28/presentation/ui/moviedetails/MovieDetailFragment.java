@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 import dagger.hilt.android.AndroidEntryPoint;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -221,58 +222,70 @@ public class MovieDetailFragment extends Fragment {
                                 try {
                                     Date reminderDate = sdf.parse(selectedDateTime);
                                     long delay = reminderDate.getTime() - System.currentTimeMillis();
+
+                                    // Kiểm tra thời gian quá khứ
                                     if (delay <= 0) {
                                         Toast.makeText(getContext(), "Cannot set reminder for a past time", Toast.LENGTH_SHORT).show();
-                                        return;
+                                        return; // Dừng ngay nếu thời gian trong quá khứ
                                     }
 
+                                    // Kiểm tra xung đột và thêm reminder
                                     disposables.add(
                                             viewModel.checkReminderConflict(movie.getId(), selectedDateTime)
-                                                    .subscribeOn(Schedulers.io())
-                                                    .observeOn(AndroidSchedulers.mainThread())
+                                                    .subscribeOn(Schedulers.io()) // Chạy kiểm tra xung đột trên IO thread
+                                                    .flatMap(reminders -> {
+                                                        Log.d("MovieDetailFragment", "Received reminders: size=" + reminders.size() + ", content=" + reminders.toString());
+                                                        if (!reminders.isEmpty()) {
+                                                            Log.d("MovieDetailFragment", "Conflict found for movieId=" + movie.getId() + ", dateTime=" + selectedDateTime);
+                                                            return Single.error(new IllegalStateException("Reminder conflict"));
+                                                        } else {
+                                                            Log.d("MovieDetailFragment", "No conflict found, adding reminder");
+                                                            String posterUrl = movie.getPosterUrl() != null && !movie.getPosterUrl().isEmpty()
+                                                                    ? "https://image.tmdb.org/t/p/w500" + movie.getPosterUrl()
+                                                                    : "";
+                                                            Reminder reminder = new Reminder(
+                                                                    movie.getId(),
+                                                                    movie.getTitle() != null ? movie.getTitle() : "Unknown Title",
+                                                                    selectedDateTime,
+                                                                    posterUrl,
+                                                                    movie.getReleaseDate() != null ? movie.getReleaseDate() : "",
+                                                                    movie.getVoteAverage()
+                                                            );
+                                                            return viewModel.addReminder(reminder) // Chạy trên IO thread
+                                                                    .toSingleDefault("Success");
+                                                        }
+                                                    })
+                                                    .observeOn(AndroidSchedulers.mainThread()) // Chuyển sang main thread để cập nhật UI
                                                     .subscribe(
-                                                            reminders -> {
-                                                                if (!reminders.isEmpty()) {
-                                                                    Toast.makeText(getContext(), "A reminder for this movie at this time already exists!", Toast.LENGTH_SHORT).show();
-                                                                } else {
-                                                                    String posterUrl = "https://image.tmdb.org/t/p/w500" + movie.getPosterUrl();
-                                                                    String releaseDate = movie.getReleaseDate();
-                                                                    double voteAverage = movie.getVoteAverage();
-                                                                    Reminder reminder = new Reminder(
-                                                                            movie.getId(),
-                                                                            movie.getTitle(),
-                                                                            selectedDateTime,
-                                                                            posterUrl,
-                                                                            releaseDate,
-                                                                            voteAverage
-                                                                    );
-                                                                    disposables.add(
-                                                                            viewModel.addReminder(reminder)
-                                                                                    .subscribeOn(Schedulers.io())
-                                                                                    .observeOn(AndroidSchedulers.mainThread())
-                                                                                    .subscribe(
-                                                                                            () -> {
-                                                                                                binding.tvReminderDateTime.setText("Reminder set for: " + selectedDateTime);
-                                                                                                binding.tvReminderDateTime.setVisibility(View.VISIBLE);
-                                                                                                Toast.makeText(getContext(), "Reminder set for " + selectedDateTime, Toast.LENGTH_SHORT).show();
-                                                                                                scheduleReminder(reminder, calendar);
-                                                                                            },
-                                                                                            throwable -> {
-                                                                                                Log.e("MovieDetailFragment", "Error setting reminder: " + throwable.getMessage());
-                                                                                                Toast.makeText(getContext(), "Error setting reminder", Toast.LENGTH_SHORT).show();
-                                                                                            }
-                                                                                    )
-                                                                    );
-                                                                }
+                                                            result -> {
+                                                                Log.d("MovieDetailFragment", "Reminder added successfully");
+                                                                binding.tvReminderDateTime.setText("Reminder set for: " + selectedDateTime);
+                                                                binding.tvReminderDateTime.setVisibility(View.VISIBLE);
+                                                                Toast.makeText(getContext(), "Reminder set for " + selectedDateTime, Toast.LENGTH_SHORT).show();
+                                                                scheduleReminder(new Reminder(
+                                                                        movie.getId(),
+                                                                        movie.getTitle() != null ? movie.getTitle() : "Unknown Title",
+                                                                        selectedDateTime,
+                                                                        movie.getPosterUrl() != null && !movie.getPosterUrl().isEmpty()
+                                                                                ? "https://image.tmdb.org/t/p/w500" + movie.getPosterUrl()
+                                                                                : "",
+                                                                        movie.getReleaseDate() != null ? movie.getReleaseDate() : "",
+                                                                        movie.getVoteAverage()
+                                                                ), calendar);
                                                             },
                                                             throwable -> {
-                                                                Log.e("MovieDetailFragment", "Error checking reminder conflict: " + throwable.getMessage());
-                                                                Toast.makeText(getContext(), "Error checking reminder conflict", Toast.LENGTH_SHORT).show();
+                                                                Log.e("MovieDetailFragment", "Error in subscription: " + throwable.getMessage(), throwable);
+                                                                if (throwable instanceof IllegalStateException) {
+                                                                    Toast.makeText(getContext(), "A reminder for this movie at this time already exists!", Toast.LENGTH_SHORT).show();
+                                                                } else {
+                                                                    Log.e("MovieDetailFragment", "Error setting reminder: " + throwable.getMessage(), throwable);
+                                                                    Toast.makeText(getContext(), "Error setting reminder", Toast.LENGTH_SHORT).show();
+                                                                }
                                                             }
                                                     )
                                     );
                                 } catch (ParseException e) {
-                                    Log.e("MovieDetailFragment", "Error parsing selected date: " + e.getMessage());
+                                    Log.e("MovieDetailFragment", "Error parsing selected date: " + e.getMessage(), e);
                                     Toast.makeText(getContext(), "Error setting reminder", Toast.LENGTH_SHORT).show();
                                 }
                             },
@@ -296,6 +309,7 @@ public class MovieDetailFragment extends Fragment {
             long delay = reminderDate.getTime() - System.currentTimeMillis();
 
             if (delay > 0) {
+                Log.d("MovieDetailFragment", "Scheduling reminder for: " + reminder.getDateTime());
                 Data inputData = new Data.Builder()
                         .putString(ReminderWorker.KEY_MOVIE_TITLE, reminder.getTitle())
                         .putInt(ReminderWorker.KEY_MOVIE_ID, reminder.getMovieId())
@@ -314,7 +328,7 @@ public class MovieDetailFragment extends Fragment {
                 Toast.makeText(getContext(), "Cannot set reminder for a past time", Toast.LENGTH_SHORT).show();
             }
         } catch (ParseException e) {
-            Log.e("MovieDetailFragment", "Error parsing reminder date: " + e.getMessage());
+            Log.e("MovieDetailFragment", "Error parsing reminder date: " + e.getMessage(), e);
             Toast.makeText(getContext(), "Error scheduling reminder", Toast.LENGTH_SHORT).show();
         }
     }

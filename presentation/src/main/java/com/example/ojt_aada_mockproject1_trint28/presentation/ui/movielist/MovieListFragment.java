@@ -45,7 +45,7 @@ public class MovieListFragment extends Fragment {
     private MainViewModel mainViewModel;
     private MovieAdapter adapter;
     private final CompositeDisposable disposables = new CompositeDisposable();
-    private boolean isGridMode;
+    private boolean isGridMode; // Chỉ áp dụng cho MODE_API
     private String mode;
     private NavController navController;
     private List<Movie> fullFavoriteMovies;
@@ -88,8 +88,13 @@ public class MovieListFragment extends Fragment {
 
         viewModel.setMode(mode);
 
-        isGridMode = mainViewModel.getIsGridMode().getValue() != null && mainViewModel.getIsGridMode().getValue();
-        Log.d("MovieListFragment", "Initial isGridMode: " + isGridMode);
+        // Khởi tạo isGridMode dựa trên mode
+        if (mode.equals(MODE_API)) {
+            isGridMode = mainViewModel.getIsGridMode().getValue() != null && mainViewModel.getIsGridMode().getValue();
+        } else {
+            isGridMode = false; // MODE_FAVORITE luôn là linear
+        }
+        Log.d("MovieListFragment", "Initial isGridMode: " + isGridMode + " for mode: " + mode);
 
         adapter = new MovieAdapter(isGridMode, viewModel);
 
@@ -104,7 +109,6 @@ public class MovieListFragment extends Fragment {
                 bundle.putSerializable("movie", movie);
                 mainViewModel.setIsInMovieDetail(mode, true);
                 navController.navigate(R.id.action_movieListFragment_to_movieDetailFragment, bundle);
-                // Gọi phương thức reset trong ViewModel
                 viewModel.resetNavigateToMovieDetail();
             }
         });
@@ -128,30 +132,37 @@ public class MovieListFragment extends Fragment {
             }
         });
 
-        mainViewModel.getIsGridMode().observe(getViewLifecycleOwner(), newGridMode -> {
-            int firstVisiblePosition = getFirstVisibleItemPosition();
-            mainViewModel.setScrollPosition(mode, firstVisiblePosition);
-            Log.d("MovieListFragment", "Saved scroll position before layout change: " + firstVisiblePosition + " for mode: " + mode);
+        // Chỉ quan sát isGridMode cho MODE_API
+        if (mode.equals(MODE_API)) {
+            mainViewModel.getIsGridMode().observe(getViewLifecycleOwner(), newGridMode -> {
+                int firstVisiblePosition = getFirstVisibleItemPosition();
+                mainViewModel.setScrollPosition(mode, firstVisiblePosition);
+                Log.d("MovieListFragment", "Saved scroll position before layout change: " + firstVisiblePosition + " for mode: " + mode);
 
-            isGridMode = newGridMode;
-            binding.recyclerView.removeOnScrollListener(scrollListener);
-            switchLayoutManager(isGridMode);
-            adapter.setGridMode(isGridMode);
+                isGridMode = newGridMode;
+                binding.recyclerView.removeOnScrollListener(scrollListener);
+                switchLayoutManager(isGridMode);
+                adapter.setGridMode(isGridMode);
 
-            binding.recyclerView.post(() -> {
-                Integer savedPosition = mainViewModel.getScrollPosition(mode).getValue();
-                if (savedPosition != null && savedPosition >= 0 && savedPosition < adapter.getItemCount()) {
-                    binding.recyclerView.scrollToPosition(savedPosition);
-                    Log.d("MovieListFragment", "Restored scroll position after layout change to: " + savedPosition + ", Item count: " + adapter.getItemCount() + " for mode: " + mode);
-                } else {
-                    Log.d("MovieListFragment", "Cannot restore scroll position after layout change. Saved position: " + savedPosition + ", Item count: " + adapter.getItemCount() + " for mode: " + mode);
-                }
-                binding.recyclerView.addOnScrollListener(scrollListener);
+                binding.recyclerView.post(() -> {
+                    Integer savedPosition = mainViewModel.getScrollPosition(mode).getValue();
+                    if (savedPosition != null && savedPosition >= 0 && savedPosition < adapter.getItemCount()) {
+                        binding.recyclerView.scrollToPosition(savedPosition);
+                        Log.d("MovieListFragment", "Restored scroll position after layout change to: " + savedPosition + ", Item count: " + adapter.getItemCount() + " for mode: " + mode);
+                    } else {
+                        Log.d("MovieListFragment", "Cannot restore scroll position after layout change. Saved position: " + savedPosition + ", Item count: " + adapter.getItemCount() + " for mode: " + mode);
+                    }
+                    binding.recyclerView.addOnScrollListener(scrollListener);
+                });
             });
-        });
+        } else {
+            // MODE_FAVORITE: Đảm bảo luôn là linear
+            switchLayoutManager(false);
+            adapter.setGridMode(false);
+        }
 
         mainViewModel.getMovieType().observe(getViewLifecycleOwner(), movieType -> {
-            if (movieType != null) {
+            if (movieType != null && mode.equals(MODE_API)) { // Chỉ áp dụng cho MODE_API
                 String lastMovieType = mainViewModel.getLastMovieType(mode).getValue();
                 if (lastMovieType == null || !lastMovieType.equals(movieType)) {
                     mainViewModel.setShouldResetPosition(true);
@@ -300,11 +311,16 @@ public class MovieListFragment extends Fragment {
     }
 
     public void switchLayoutManager(boolean isGridMode) {
-        RecyclerView.LayoutManager newLayoutManager = isGridMode ?
-                new GridLayoutManager(getContext(), 2) :
-                new LinearLayoutManager(getContext());
+        RecyclerView.LayoutManager newLayoutManager;
+        if (mode.equals(MODE_FAVORITE)) {
+            newLayoutManager = new LinearLayoutManager(getContext()); // Luôn là linear cho MODE_FAVORITE
+        } else {
+            newLayoutManager = isGridMode ?
+                    new GridLayoutManager(getContext(), 2) :
+                    new LinearLayoutManager(getContext());
+        }
         binding.recyclerView.setLayoutManager(newLayoutManager);
-        Log.d("MovieListFragment", "Switched layout manager to " + (isGridMode ? "Grid" : "Linear"));
+        Log.d("MovieListFragment", "Switched layout manager to " + (isGridMode && mode.equals(MODE_API) ? "Grid" : "Linear") + " for mode: " + mode);
     }
 
     private int getFirstVisibleItemPosition() {

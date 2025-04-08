@@ -1,5 +1,7 @@
 package com.example.data.repository;
 
+import android.os.Build;
+
 import com.example.data.local.dao.ReminderDao;
 import com.example.data.local.entity.ReminderEntity;
 import com.example.data.mapper.ReminderMapper;
@@ -26,10 +28,13 @@ public class ReminderRepository implements IReminderRepository {
 
     @Override
     public Flowable<List<Reminder>> getReminders(int userId) {
-        return reminderDao.getReminders(userId)
-                .map(entities -> entities.stream()
-                        .map(ReminderMapper::toDomain)
-                        .collect(Collectors.toList()));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return reminderDao.getReminders(userId)
+                    .map(entities -> entities.stream()
+                            .map(ReminderMapper::toDomain)
+                            .collect(Collectors.toList()));
+        }
+        return null;
     }
 
     @Override

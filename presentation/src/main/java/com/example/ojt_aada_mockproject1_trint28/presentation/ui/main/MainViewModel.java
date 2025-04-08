@@ -13,25 +13,25 @@ import java.util.List;
 import javax.inject.Inject;
 
 public class MainViewModel extends ViewModel {
-    private final MutableLiveData<Boolean> isGridMode = new MutableLiveData<>(false);
-    private final MutableLiveData<String> movieType = new MutableLiveData<>("popular");
-    private final MutableLiveData<Integer> selectedTabPosition = new MutableLiveData<>(0);
-    private final MutableLiveData<Boolean> isGridIconVisible = new MutableLiveData<>(true);
-    private final MutableLiveData<Boolean> isSearchIconVisible = new MutableLiveData<>(false);
-    private final MutableLiveData<Boolean> isCloseIconVisible = new MutableLiveData<>(false);
-    private final MutableLiveData<Boolean> isSearchViewVisible = new MutableLiveData<>(false);
-    private final MutableLiveData<String> searchQuery = new MutableLiveData<>("");
-    private final MutableLiveData<Integer> scrollPositionApi = new MutableLiveData<>(0);
-    private final MutableLiveData<Integer> scrollPositionFavorite = new MutableLiveData<>(0);
-    private final MutableLiveData<Integer> pageIndexApi = new MutableLiveData<>(1);
-    private final MutableLiveData<Integer> pageIndexFavorite = new MutableLiveData<>(1);
-    private final MutableLiveData<List<Movie>> loadedMoviesApi = new MutableLiveData<>(new ArrayList<>());
-    private final MutableLiveData<List<Movie>> loadedMoviesFavorite = new MutableLiveData<>(new ArrayList<>());
-    private final MutableLiveData<Boolean> shouldResetPosition = new MutableLiveData<>(false);
-    private final MutableLiveData<String> lastMovieTypeApi = new MutableLiveData<>("popular");
-    private final MutableLiveData<String> lastMovieTypeFavorite = new MutableLiveData<>("favorite");
-    private final MutableLiveData<Movie> lastSelectedMovieApi = new MutableLiveData<>();
-    private final MutableLiveData<Movie> lastSelectedMovieFavorite = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> isGridMode = new MutableLiveData<>(false); // Chế độ mặc định là danh sách
+    private final MutableLiveData<String> movieType = new MutableLiveData<>("popular"); // Loại phim mặc định là "popular"
+    private final MutableLiveData<Integer> selectedTabPosition = new MutableLiveData<>(0); // Vị trí tab được chọn mặc định là 0 (tab đầu tiên)
+    private final MutableLiveData<Boolean> isGridIconVisible = new MutableLiveData<>(true); // Biểu tượng lưới
+    private final MutableLiveData<Boolean> isSearchIconVisible = new MutableLiveData<>(false); // Biểu tượng tìm kiếm
+    private final MutableLiveData<Boolean> isCloseIconVisible = new MutableLiveData<>(false); // Biểu tượng đóng
+    private final MutableLiveData<Boolean> isSearchViewVisible = new MutableLiveData<>(false); // Khung tìm kiếm
+    private final MutableLiveData<String> searchQuery = new MutableLiveData<>(""); // Truy vấn tìm kiếm mặc định là rỗng
+    private final MutableLiveData<Integer> scrollPositionApi = new MutableLiveData<>(0); // Vị trí cuộn tab movieList, mặc định là 0
+    private final MutableLiveData<Integer> scrollPositionFavorite = new MutableLiveData<>(0); // Vị trí cuộn movieListFavourite, mặc định là 0
+    private final MutableLiveData<Integer> pageIndexApi = new MutableLiveData<>(1); // Chỉ số trang mặc định là 1
+    private final MutableLiveData<Integer> pageIndexFavorite = new MutableLiveData<>(1);  // Chỉ số trang mặc định là 1
+    private final MutableLiveData<List<Movie>> loadedMoviesApi = new MutableLiveData<>(new ArrayList<>()); // Lưu trữ danh sách phim đã tải về từ API
+    private final MutableLiveData<List<Movie>> loadedMoviesFavorite = new MutableLiveData<>(new ArrayList<>()); // Lưu trữ danh sách phim yêu thích
+    private final MutableLiveData<Boolean> shouldResetPosition = new MutableLiveData<>(false); // Biến này sẽ được sử dụng để xác định xem có nên đặt lại vị trí cuộn hay không
+    private final MutableLiveData<String> lastMovieTypeApi = new MutableLiveData<>("popular"); // Loại phim cuối cùng được chọn từ API
+    private final MutableLiveData<String> lastMovieTypeFavorite = new MutableLiveData<>("favorite"); // Loại phim cuối cùng được chọn từ danh sách yêu thích
+    private final MutableLiveData<Movie> lastSelectedMovieApi = new MutableLiveData<>(); // Lưu trữ phim cuối cùng được chọn từ API
+    private final MutableLiveData<Movie> lastSelectedMovieFavorite = new MutableLiveData<>();  // Lưu trữ phim cuối cùng được chọn từ danh sách yêu thích
 
     // Thêm hai biến để theo dõi trạng thái isInMovieDetail riêng biệt cho từng tab
     private final MutableLiveData<Boolean> isInMovieDetailApi = new MutableLiveData<>(false);

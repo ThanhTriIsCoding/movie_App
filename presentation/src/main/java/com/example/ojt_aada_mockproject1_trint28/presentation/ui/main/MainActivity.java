@@ -125,8 +125,8 @@ public class MainActivity extends AppCompatActivity {
 
         // Thiết lập RecyclerView trong Drawer
         remindersAdapter = new ShowAllRemindersAdapter(remindersViewModel); // Truyền ViewModel vào adapter
-        remindersAdapter.setDisplayMode(false, false); // Hiển thị poster, ẩn nút xóa
-        headerBinding.rvReminders.setLayoutManager(new LinearLayoutManager(this));
+        remindersAdapter.setDisplayMode(false, false); // ẩn thị poster, ẩn nút xóa
+        headerBinding.rvReminders.setLayoutManager(new LinearLayoutManager( this));
         headerBinding.rvReminders.setAdapter(remindersAdapter);
 
         profileViewModel.reminders.observe(this, reminders -> {
