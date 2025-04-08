@@ -1,7 +1,6 @@
 package com.example.ojt_aada_mockproject1_trint28.presentation.adapter;
 
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -10,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.domain.model.Reminder;
 import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ItemReminderBinding;
+import com.example.ojt_aada_mockproject1_trint28.presentation.ui.reminders.ShowAllRemindersViewModel;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -18,16 +18,13 @@ import java.util.List;
 public class ShowAllRemindersAdapter extends RecyclerView.Adapter<ShowAllRemindersAdapter.ReminderViewHolder> {
 
     private List<Reminder> reminders = new ArrayList<>();
-    private OnDeleteClickListener deleteClickListener;
-    private boolean showPoster = true; // Mặc định hiển thị poster
-    private boolean showDeleteButton = true; // Mặc định hiển thị nút xóa
+    private ShowAllRemindersViewModel viewModel; // Thêm ViewModel
+    private boolean showPoster = true;
+    private boolean showDeleteButton = true;
 
-    public interface OnDeleteClickListener {
-        void onDeleteClick(Reminder reminder);
-    }
-
-    public void setDeleteClickListener(OnDeleteClickListener listener) {
-        this.deleteClickListener = listener;
+    // Constructor nhận ViewModel
+    public ShowAllRemindersAdapter(ShowAllRemindersViewModel viewModel) {
+        this.viewModel = viewModel;
     }
 
     public void setReminders(List<Reminder> reminders) {
@@ -35,11 +32,10 @@ public class ShowAllRemindersAdapter extends RecyclerView.Adapter<ShowAllReminde
         notifyDataSetChanged();
     }
 
-    // Thêm phương thức để cấu hình chế độ hiển thị
     public void setDisplayMode(boolean showPoster, boolean showDeleteButton) {
         this.showPoster = showPoster;
         this.showDeleteButton = showDeleteButton;
-        notifyDataSetChanged(); // Làm mới toàn bộ adapter để áp dụng chế độ hiển thị mới
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -71,15 +67,11 @@ public class ShowAllRemindersAdapter extends RecyclerView.Adapter<ShowAllReminde
 
         void bind(Reminder reminder) {
             binding.setReminder(reminder);
+            binding.setViewModel(viewModel); // Gắn ViewModel vào binding
             binding.setShowPoster(showPoster);
             binding.setShowDeleteButton(showDeleteButton);
-            binding.setDeleteClickListener(v -> {
-                if (deleteClickListener != null) {
-                    deleteClickListener.onDeleteClick(reminder);
-                }
-            });
 
-            // Load the poster image using Picasso
+            // Load poster image using Picasso
             Picasso.get()
                     .load(reminder.getPosterUrl())
                     .placeholder(R.drawable.ic_launcher_background)

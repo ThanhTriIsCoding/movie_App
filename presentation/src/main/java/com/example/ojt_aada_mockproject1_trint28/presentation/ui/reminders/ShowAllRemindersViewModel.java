@@ -11,7 +11,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-
 import com.example.domain.model.Reminder;
 import com.example.domain.usecase.ReminderUseCases;
 import com.example.ojt_aada_mockproject1_trint28.presentation.worker.ReminderWorker;
@@ -45,7 +44,7 @@ public class ShowAllRemindersViewModel extends ViewModel {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d("ShowAllRemindersVM", "Received reminder deleted broadcast");
-                loadReminders(); // Làm mới danh sách reminders
+                loadReminders();
             }
         };
         LocalBroadcastManager.getInstance(context)

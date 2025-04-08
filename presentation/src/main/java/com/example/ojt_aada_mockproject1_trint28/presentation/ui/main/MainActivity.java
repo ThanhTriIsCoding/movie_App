@@ -30,12 +30,12 @@ import com.example.domain.usecase.SettingsUseCases;
 import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.ActivityMainBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.NavHeaderBinding;
-
 import com.example.ojt_aada_mockproject1_trint28.presentation.adapter.ShowAllRemindersAdapter;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListViewModel;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.EditProfileActivity;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.profile.ProfileViewModel;
+import com.example.ojt_aada_mockproject1_trint28.presentation.ui.reminders.ShowAllRemindersViewModel; // Thêm import này
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 
@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private MainViewModel viewModel;
     private ProfileViewModel profileViewModel;
     private MovieListViewModel movieListViewModel;
+    private ShowAllRemindersViewModel remindersViewModel; // Thêm ViewModel mới
     private NavController navController;
     private boolean shouldShowMoreIcon = false;
     private ShowAllRemindersAdapter remindersAdapter;
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
         profileViewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
         movieListViewModel = new ViewModelProvider(this).get(MovieListViewModel.class);
+        remindersViewModel = new ViewModelProvider(this).get(ShowAllRemindersViewModel.class); // Khởi tạo ViewModel
         binding.setViewModel(viewModel);
         binding.setLifecycleOwner(this);
 
@@ -122,8 +124,7 @@ public class MainActivity extends AppCompatActivity {
         headerBinding.setLifecycleOwner(this);
 
         // Thiết lập RecyclerView trong Drawer
-        remindersAdapter = new ShowAllRemindersAdapter();
-        remindersAdapter.setDeleteClickListener(null); // Không cho phép xóa trong Drawer
+        remindersAdapter = new ShowAllRemindersAdapter(remindersViewModel); // Truyền ViewModel vào adapter
         remindersAdapter.setDisplayMode(false, false); // Hiển thị poster, ẩn nút xóa
         headerBinding.rvReminders.setLayoutManager(new LinearLayoutManager(this));
         headerBinding.rvReminders.setAdapter(remindersAdapter);
@@ -303,7 +304,6 @@ public class MainActivity extends AppCompatActivity {
                         binding.toolbarTitle.setText(movie.getTitle());
                         String mode = viewModel.getSelectedTabPosition().getValue() == 1 ? MovieListFragment.MODE_FAVORITE : MovieListFragment.MODE_API;
                         viewModel.setLastSelectedMovie(mode, movie);
-                        // Đặt trạng thái isInMovieDetail cho tab tương ứng
                         viewModel.setIsInMovieDetail(mode, true);
                     }
                 }

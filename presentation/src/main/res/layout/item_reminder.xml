@@ -8,14 +8,14 @@
             name="reminder"
             type="com.example.domain.model.Reminder" />
         <variable
+            name="viewModel"
+            type="com.example.ojt_aada_mockproject1_trint28.presentation.ui.reminders.ShowAllRemindersViewModel" />
+        <variable
             name="showPoster"
             type="boolean" />
         <variable
             name="showDeleteButton"
             type="boolean" />
-        <variable
-            name="deleteClickListener"
-            type="android.view.View.OnClickListener" />
     </data>
 
     <LinearLayout
@@ -130,7 +130,7 @@
                 android:layout_marginStart="8dp"
                 android:background="@drawable/ic_delete"
                 android:visibility="@{showDeleteButton ? View.VISIBLE : View.GONE}"
-                android:onClick="@{(view) -> deleteClickListener.onClick(view)}"/>
+                android:onClick="@{() -> viewModel.deleteReminder(reminder)}"/>
         </LinearLayout>
     </LinearLayout>
 </layout>
