@@ -20,7 +20,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ojt_aada_mockproject1_trint28"
-include ':app'
 include ':domain'
 include ':data'
 include ':presentation'

@@ -1,16 +1,24 @@
 plugins {
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    id 'com.google.gms.google-services'
+    id 'com.google.dagger.hilt.android'
+    id 'kotlin-kapt'
 }
 
 android {
-    namespace 'com.example.presentation'
-    compileSdk 34
+    namespace 'com.example.ojt_aada_mockproject1_trint28'
+    compileSdk 35
 
     defaultConfig {
+        applicationId "com.example.ojt_aada_mockproject1_trint28"
         minSdk 27
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles "consumer-rules.pro"
     }
 
     buildTypes {
@@ -23,13 +31,93 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+    buildFeatures {
+        compose true
+        dataBinding true
+        viewBinding true
+    }
 }
 
 dependencies {
-
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.lifecycle.runtime.ktx
+    implementation libs.androidx.activity.compose
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.androidx.ui
+    implementation libs.androidx.ui.graphics
+    implementation libs.androidx.ui.tooling.preview
+    implementation libs.androidx.material3
     implementation libs.androidx.appcompat
     implementation libs.material
+    implementation libs.androidx.activity
+    implementation libs.androidx.constraintlayout
+    implementation libs.androidx.navigation.fragment
+    implementation libs.androidx.navigation.ui
+    implementation libs.androidx.swiperefreshlayout
+    implementation libs.androidx.preference
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core
+    androidTestImplementation platform(libs.androidx.compose.bom)
+    androidTestImplementation libs.androidx.ui.test.junit4
+    debugImplementation libs.androidx.ui.tooling
+    debugImplementation libs.androidx.ui.test.manifest
+
+    // Firebase
+    implementation platform("com.google.firebase:firebase-bom:33.11.0")
+    implementation "com.google.firebase:firebase-analytics"
+    implementation "com.google.firebase:firebase-database:21.0.0"
+    implementation 'com.google.firebase:firebase-storage:20.3.0'
+
+    // UI
+    implementation "de.hdodenhof:circleimageview:3.1.0"
+    implementation "com.google.android.material:material:1.9.0"
+
+    // Room Database
+    implementation "androidx.room:room-runtime:2.6.1"
+    implementation "androidx.room:room-ktx:2.6.1"
+    implementation "androidx.room:room-rxjava3:2.6.1"
+    kapt "androidx.room:room-compiler:2.6.1" // Changed from annotationProcessor to kapt
+
+    // Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava3:2.9.0'
+
+    // RxJava
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.5'
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
+
+    // Paging
+    implementation 'androidx.paging:paging-runtime:3.2.1'
+    implementation 'androidx.paging:paging-rxjava3:3.2.1'
+
+    // Dagger
+    implementation "com.google.dagger:dagger:2.52"
+    kapt "com.google.dagger:dagger-compiler:2.52" // Already using kapt for Dagger, which is correct
+
+    // Picasso
+    implementation 'com.squareup.picasso:picasso:2.8'
+
+    // Add javax.inject for @Named annotation
+    implementation 'javax.inject:javax.inject:1'
+
+    // Hilt
+    implementation "com.google.dagger:hilt-android:2.51.1"
+    kapt "com.google.dagger:hilt-compiler:2.51.1"
+
+    // Add kotlinx-coroutines-rx3 for Flow to Flowable conversion
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.8.1"
+
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+
+    implementation 'androidx.work:work-runtime:2.9.0'
+    implementation 'androidx.work:work-rxjava3:2.9.0'
+
+    implementation project(':domain')
+    implementation project(':data')
+
 }
