@@ -4,7 +4,11 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -19,8 +23,14 @@ public class MainViewModel extends ViewModel {
     private final MutableLiveData<String> searchQuery = new MutableLiveData<>("");
     private final MutableLiveData<Integer> scrollPositionApi = new MutableLiveData<>(0);
     private final MutableLiveData<Integer> scrollPositionFavorite = new MutableLiveData<>(0);
+    private final MutableLiveData<Integer> pageIndexApi = new MutableLiveData<>(1);
+    private final MutableLiveData<Integer> pageIndexFavorite = new MutableLiveData<>(1);
+    private final MutableLiveData<List<Movie>> loadedMoviesApi = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<Movie>> loadedMoviesFavorite = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Boolean> shouldResetPosition = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> isInMovieDetail = new MutableLiveData<>(false);
+    private final MutableLiveData<String> lastMovieTypeApi = new MutableLiveData<>("popular");
+    private final MutableLiveData<String> lastMovieTypeFavorite = new MutableLiveData<>("favorite");
 
     @Inject
     public MainViewModel() {
@@ -118,6 +128,33 @@ public class MainViewModel extends ViewModel {
         }
     }
 
+    public LiveData<Integer> getPageIndex(String mode) {
+        return mode.equals(MovieListFragment.MODE_API) ? pageIndexApi : pageIndexFavorite;
+    }
+
+    public void setPageIndex(String mode, int pageIndex) {
+        if (mode.equals(MovieListFragment.MODE_API)) {
+            pageIndexApi.setValue(pageIndex);
+        } else {
+            pageIndexFavorite.setValue(pageIndex);
+        }
+    }
+
+    public LiveData<List<Movie>> getLoadedMovies(String mode) {
+        return mode.equals(MovieListFragment.MODE_API) ? loadedMoviesApi : loadedMoviesFavorite;
+    }
+
+    public void setLoadedMovies(String mode, List<Movie> movies) {
+        if (movies == null) {
+            movies = new ArrayList<>();
+        }
+        if (mode.equals(MovieListFragment.MODE_API)) {
+            loadedMoviesApi.setValue(movies);
+        } else {
+            loadedMoviesFavorite.setValue(movies);
+        }
+    }
+
     public LiveData<Boolean> getShouldResetPosition() {
         return shouldResetPosition;
     }
@@ -132,5 +169,17 @@ public class MainViewModel extends ViewModel {
 
     public void setIsInMovieDetail(boolean isInDetail) {
         isInMovieDetail.setValue(isInDetail);
+    }
+
+    public LiveData<String> getLastMovieType(String mode) {
+        return mode.equals(MovieListFragment.MODE_API) ? lastMovieTypeApi : lastMovieTypeFavorite;
+    }
+
+    public void setLastMovieType(String mode, String movieType) {
+        if (mode.equals(MovieListFragment.MODE_API)) {
+            lastMovieTypeApi.setValue(movieType);
+        } else {
+            lastMovieTypeFavorite.setValue(movieType);
+        }
     }
 }

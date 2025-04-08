@@ -4,31 +4,31 @@
     android:theme="@style/CustomPreferenceTheme">
 
     <!-- Phần FILTER -->
-    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreferenceCategory
+    <com.example.ojt_aada_mockproject1_trint28.data.custom.CustomPreferenceCategory
         android:title="FILTER"
         app:iconSpaceReserved="false" />
 
-    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreference
+    <com.example.ojt_aada_mockproject1_trint28.data.custom.CustomPreference
         android:key="category"
         android:title="Category:"
         android:summary="Popular Movies" />
 
-    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreference
+    <com.example.ojt_aada_mockproject1_trint28.data.custom.CustomPreference
         android:key="rate"
         android:title="Movie with rate from:"
         android:summary="5" />
 
-    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreference
+    <com.example.ojt_aada_mockproject1_trint28.data.custom.CustomPreference
         android:key="release_year"
         android:title="From release year:"
         android:summary="2015" />
 
     <!-- Phần SORT -->
-    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreferenceCategory
+    <com.example.ojt_aada_mockproject1_trint28.data.custom.CustomPreferenceCategory
         android:title="SORT"
         app:iconSpaceReserved="false" />
 
-    <com.example.ojt_aada_mockproject1_trint28.util.custom.CustomPreference
+    <com.example.ojt_aada_mockproject1_trint28.data.custom.CustomPreference
         android:key="sort_by"
         android:title="Sort By:"
         android:summary="Release Date" />

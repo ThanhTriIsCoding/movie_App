@@ -12,6 +12,7 @@ import com.example.ojt_aada_mockproject1_trint28.data.remote.model.MovieResponse
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Settings;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
     @Override
     public Single<LoadResult<Integer, Movie>> loadSingle(@NonNull LoadParams<Integer> params) {
         int page = params.getKey() != null ? params.getKey() : 1;
-        int userId = 1; // Default userId
+        int userId = 1;
 
         Single<MovieListResponse> request;
         switch (movieType) {
@@ -83,7 +84,7 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
                             .collect(Collectors.toList());
 
                     return Single.zip(movieSingles, objects -> {
-                        List<Movie> movies = new java.util.ArrayList<>();
+                        List<Movie> movies = new ArrayList<>();
                         for (Object obj : objects) {
                             movies.add((Movie) obj);
                         }
@@ -94,7 +95,7 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
                     List<Movie> filteredMovies = movies.stream()
                             .filter(movie -> {
                                 boolean matchesRating = movie.getVoteAverage() >= settings.getMinRating();
-                                boolean matchesYear = true; // Default to true if release date is invalid
+                                boolean matchesYear = true;
                                 try {
                                     String releaseDate = movie.getReleaseDate();
                                     if (releaseDate != null && !releaseDate.isEmpty()) {
@@ -111,11 +112,12 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
                                     Comparator.comparing(Movie::getReleaseDate, Comparator.nullsLast(String::compareTo)).reversed())
                             .collect(Collectors.toList());
 
-                    Integer nextKey = (page < filteredMovies.size()) ? page + 1 : null;
+                    System.out.println("MoviePagingSource: Loaded " + movies.size() + " movies, filtered to " + filteredMovies.size() + " movies for page " + page);
+                    Integer nextKey = filteredMovies.isEmpty() ? null : page + 1;
                     return (LoadResult<Integer, Movie>) new LoadResult.Page<>(
                             filteredMovies,
-                            page == 1 ? null : page - 1, // prevKey
-                            nextKey // nextKey
+                            page == 1 ? null : page - 1,
+                            nextKey
                     );
                 })
                 .onErrorResumeNext(throwable ->
@@ -133,7 +135,7 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
                 response.getVoteAverage(),
                 response.isAdult(),
                 posterUrl,
-                false // Default isLiked to false, will be updated by database check
+                false
         );
     }
 

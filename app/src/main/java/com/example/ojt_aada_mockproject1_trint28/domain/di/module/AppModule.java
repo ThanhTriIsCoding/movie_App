@@ -1,4 +1,4 @@
-package com.example.ojt_aada_mockproject1_trint28.di.module;
+package com.example.ojt_aada_mockproject1_trint28.domain.di.module;
 
 import android.content.Context;
 import android.content.SharedPreferences;

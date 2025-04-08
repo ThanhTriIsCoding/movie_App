@@ -13,45 +13,113 @@
             android:name="mode"
             app:argType="string"
             android:defaultValue="api" />
+        <!-- Đi tới Movie Details -->
         <action
             android:id="@+id/action_movieListFragment_to_movieDetailFragment"
             app:destination="@id/movieDetailsFragment" />
+        <!-- Đi tới Settings -->
+        <action
+            android:id="@+id/action_movieListFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment"
+            app:popUpTo="@id/movieListFragment"
+            app:popUpToInclusive="true" />
+        <!-- Đi tới About -->
+        <action
+            android:id="@+id/action_movieListFragment_to_aboutFragment"
+            app:destination="@id/aboutFragment"
+            app:popUpTo="@id/movieListFragment"
+            app:popUpToInclusive="true" />
+        <!-- Đi tới Show All Reminders -->
+        <action
+            android:id="@+id/action_movieListFragment_to_showAllRemindersFragment"
+            app:destination="@id/showAllRemindersFragment" />
     </fragment>
-
 
     <!-- Settings Tab -->
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.settings.SettingsFragment"
-        android:label="Settings" />
+        android:label="Settings">
+        <!-- Đi tới Movie List -->
+        <action
+            android:id="@+id/action_settingsFragment_to_movieListFragment"
+            app:destination="@id/movieListFragment"
+            app:popUpTo="@id/movieListFragment"
+            app:popUpToInclusive="true" />
+        <!-- Đi tới About -->
+        <action
+            android:id="@+id/action_settingsFragment_to_aboutFragment"
+            app:destination="@id/aboutFragment"
+            app:popUpTo="@id/movieListFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
 
     <!-- About Tab -->
     <fragment
         android:id="@+id/aboutFragment"
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.about.AboutFragment"
-        android:label="About" />
-
-    <!-- Global actions for Navigation Drawer -->
-    <action
-        android:id="@+id/action_global_movieDetailsFragment"
-        app:destination="@id/movieDetailsFragment" />
-
-
-
-    <action
-        android:id="@+id/action_global_showAllRemindersFragment"
-        app:destination="@id/showAllRemindersFragment" />
+        android:label="About">
+        <!-- Đi tới Movie List -->
+        <action
+            android:id="@+id/action_aboutFragment_to_movieListFragment"
+            app:destination="@id/movieListFragment"
+            app:popUpTo="@id/movieListFragment"
+            app:popUpToInclusive="true" />
+        <!-- Đi tới Settings -->
+        <action
+            android:id="@+id/action_aboutFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment"
+            app:popUpTo="@id/movieListFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
 
     <!-- Movie Details Fragment -->
     <fragment
         android:id="@+id/movieDetailsFragment"
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.moviedetails.MovieDetailFragment"
-        android:label="Movie Details" />
-
+        android:label="Movie Details">
+        <!-- Quay lại Movie List -->
+        <action
+            android:id="@+id/action_movieDetailsFragment_to_movieListFragment"
+            app:destination="@id/movieListFragment"
+            app:popUpTo="@id/movieListFragment"
+            app:popUpToInclusive="false" />
+        <!-- Đi tới Show All Reminders -->
+        <action
+            android:id="@+id/action_movieDetailsFragment_to_showAllRemindersFragment"
+            app:destination="@id/showAllRemindersFragment" />
+    </fragment>
 
     <!-- Show All Reminders Fragment -->
     <fragment
         android:id="@+id/showAllRemindersFragment"
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.reminders.ShowAllRemindersFragment"
-        android:label="All Reminders" />
+        android:label="All Reminders">
+        <!-- Quay lại Movie List -->
+        <action
+            android:id="@+id/action_showAllRemindersFragment_to_movieListFragment"
+            app:destination="@id/movieListFragment"
+            app:popUpTo="@id/movieListFragment"
+            app:popUpToInclusive="false" />
+        <!-- Quay lại Movie Details (nếu được gọi từ Movie Details) -->
+        <action
+            android:id="@+id/action_showAllRemindersFragment_to_movieDetailsFragment"
+            app:destination="@id/movieDetailsFragment"
+            app:popUpTo="@id/movieDetailsFragment"
+            app:popUpToInclusive="false" />
+    </fragment>
+
+    <!-- Global actions for Navigation Drawer -->
+    <action
+        android:id="@+id/action_global_movieDetailsFragment"
+        app:destination="@id/movieDetailsFragment"
+        app:popUpTo="@id/movieListFragment"
+        app:popUpToInclusive="false" />
+
+    <action
+        android:id="@+id/action_global_showAllRemindersFragment"
+        app:destination="@id/showAllRemindersFragment"
+        app:popUpTo="@id/movieListFragment"
+        app:popUpToInclusive="false" />
+
 </navigation>

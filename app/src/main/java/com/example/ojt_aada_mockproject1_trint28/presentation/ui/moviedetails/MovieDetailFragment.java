@@ -24,7 +24,7 @@ import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentMovieDetail
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Movie;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Reminder;
 import com.example.ojt_aada_mockproject1_trint28.presentation.adapter.CastCrewAdapter;
-import com.example.ojt_aada_mockproject1_trint28.worker.ReminderWorker;
+import com.example.ojt_aada_mockproject1_trint28.presentation.worker.ReminderWorker;
 import com.squareup.picasso.Picasso;
 
 import java.text.ParseException;

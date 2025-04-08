@@ -18,7 +18,7 @@ import com.example.ojt_aada_mockproject1_trint28.domain.model.Profile;
 import com.example.ojt_aada_mockproject1_trint28.domain.model.Reminder;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ProfileUseCases;
 import com.example.ojt_aada_mockproject1_trint28.domain.usecase.ReminderUseCases;
-import com.example.ojt_aada_mockproject1_trint28.worker.ReminderWorker;
+import com.example.ojt_aada_mockproject1_trint28.presentation.worker.ReminderWorker;
 
 import java.util.ArrayList;
 import java.util.List;

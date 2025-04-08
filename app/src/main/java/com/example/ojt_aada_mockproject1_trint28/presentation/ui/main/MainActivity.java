@@ -164,7 +164,9 @@ public class MainActivity extends AppCompatActivity {
             throw new IllegalStateException("NavHostFragment not found!");
         }
 
-        AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph())
+        // Cấu hình AppBarConfiguration để chỉ định các top-level destinations
+        AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.movieListFragment, R.id.settingsFragment, R.id.aboutFragment)
                 .setDrawerLayout(binding.drawerLayout)
                 .build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
@@ -180,21 +182,47 @@ public class MainActivity extends AppCompatActivity {
                         if (viewModel.getIsInMovieDetail().getValue() != null && viewModel.getIsInMovieDetail().getValue() && lastSelectedMovie != null) {
                             Bundle args = new Bundle();
                             args.putSerializable("movie", lastSelectedMovie);
-                            navController.navigate(R.id.movieDetailsFragment, args);
+                            navController.navigate(R.id.action_global_movieDetailsFragment, args);
                         } else {
-                            navController.navigate(R.id.movieListFragment);
+                            Bundle args = new Bundle();
+                            args.putString("mode", MovieListFragment.MODE_API);
+                            if (navController.getCurrentDestination().getId() == R.id.settingsFragment) {
+                                navController.navigate(R.id.action_settingsFragment_to_movieListFragment, args);
+                            } else if (navController.getCurrentDestination().getId() == R.id.aboutFragment) {
+                                navController.navigate(R.id.action_aboutFragment_to_movieListFragment, args);
+                            } else {
+                                navController.navigate(R.id.movieListFragment, args);
+                            }
                         }
                         break;
                     case 1: // Tab Favourite
                         Bundle args = new Bundle();
                         args.putString("mode", MovieListFragment.MODE_FAVORITE);
-                        navController.navigate(R.id.movieListFragment, args);
+                        if (navController.getCurrentDestination().getId() == R.id.settingsFragment) {
+                            navController.navigate(R.id.action_settingsFragment_to_movieListFragment, args);
+                        } else if (navController.getCurrentDestination().getId() == R.id.aboutFragment) {
+                            navController.navigate(R.id.action_aboutFragment_to_movieListFragment, args);
+                        } else {
+                            navController.navigate(R.id.movieListFragment, args);
+                        }
                         break;
                     case 2: // Tab Settings
-                        navController.navigate(R.id.settingsFragment);
+                        if (navController.getCurrentDestination().getId() == R.id.movieListFragment) {
+                            navController.navigate(R.id.action_movieListFragment_to_settingsFragment);
+                        } else if (navController.getCurrentDestination().getId() == R.id.aboutFragment) {
+                            navController.navigate(R.id.action_aboutFragment_to_settingsFragment);
+                        } else {
+                            navController.navigate(R.id.settingsFragment);
+                        }
                         break;
                     case 3: // Tab About
-                        navController.navigate(R.id.aboutFragment);
+                        if (navController.getCurrentDestination().getId() == R.id.movieListFragment) {
+                            navController.navigate(R.id.action_movieListFragment_to_aboutFragment);
+                        } else if (navController.getCurrentDestination().getId() == R.id.settingsFragment) {
+                            navController.navigate(R.id.action_settingsFragment_to_aboutFragment);
+                        } else {
+                            navController.navigate(R.id.aboutFragment);
+                        }
                         break;
                 }
             }
@@ -292,10 +320,9 @@ public class MainActivity extends AppCompatActivity {
                 if (currentDestinationId == R.id.movieDetailsFragment) {
                     viewModel.setIsInMovieDetail(false);
                     lastSelectedMovie = null;
-                    navController.popBackStack(R.id.movieDetailsFragment, true);
                     Bundle args = new Bundle();
                     args.putString("mode", MovieListFragment.MODE_API);
-                    navController.navigate(R.id.movieListFragment, args);
+                    navController.navigate(R.id.action_movieDetailsFragment_to_movieListFragment, args);
                     viewModel.setSelectedTabPosition(0);
                     TabLayout.Tab tab = binding.tabLayout.getTabAt(0);
                     if (tab != null) {
@@ -304,7 +331,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (currentDestinationId == R.id.showAllRemindersFragment) {
                     Bundle args = new Bundle();
                     args.putString("mode", MovieListFragment.MODE_API);
-                    navController.navigate(R.id.movieListFragment, args);
+                    navController.navigate(R.id.action_showAllRemindersFragment_to_movieListFragment, args);
                     if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
                         binding.drawerLayout.closeDrawer(GravityCompat.START);
                     }
@@ -349,6 +376,29 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onSupportNavigateUp() {
         return NavigationUI.navigateUp(navController, binding.drawerLayout) || super.onSupportNavigateUp();
+    }
+
+    // Override onBackPressed để xử lý nút "Back" của Android
+    @Override
+    public void onBackPressed() {
+        if (navController.getCurrentDestination() != null) {
+            int currentDestinationId = navController.getCurrentDestination().getId();
+            // Kiểm tra nếu đang ở movieListFragment
+            if (currentDestinationId == R.id.movieListFragment) {
+                Bundle args = navController.getCurrentBackStackEntry().getArguments();
+                String mode = args != null ? args.getString("mode", MovieListFragment.MODE_API) : MovieListFragment.MODE_API;
+                // Nếu đang ở mode "favorite", thoát ứng dụng
+                if (mode.equals(MovieListFragment.MODE_FAVORITE)) {
+                    finish(); // Thoát ứng dụng
+                    return;
+                }
+            }
+            // Nếu không phải trường hợp đặc biệt, để NavigationUI xử lý
+            if (NavigationUI.navigateUp(navController, binding.drawerLayout)) {
+                return;
+            }
+        }
+        super.onBackPressed();
     }
 
     @Override

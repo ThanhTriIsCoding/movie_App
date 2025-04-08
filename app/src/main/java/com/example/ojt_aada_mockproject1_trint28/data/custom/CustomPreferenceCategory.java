@@ -1,4 +1,4 @@
-package com.example.ojt_aada_mockproject1_trint28.util.custom;
+package com.example.ojt_aada_mockproject1_trint28.data.custom;
 
 import android.content.Context;
 import android.graphics.Color;

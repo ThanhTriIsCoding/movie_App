@@ -45,12 +45,13 @@ public class MovieListFragment extends Fragment {
     private MainViewModel mainViewModel;
     private MovieAdapter adapter;
     private final CompositeDisposable disposables = new CompositeDisposable();
-    private String lastMovieType;
     private boolean isGridMode;
     private String mode;
     private NavController navController;
     private List<Movie> fullFavoriteMovies;
     private RecyclerView.OnScrollListener scrollListener;
+    private boolean hasRestoredScrollPosition = false;
+    private int pageSize = 20; // Giả sử mỗi trang có 20 phần tử
 
     public static MovieListFragment newInstance(String mode) {
         MovieListFragment fragment = new MovieListFragment();
@@ -146,8 +147,11 @@ public class MovieListFragment extends Fragment {
         switchLayoutManager(isGridMode);
 
         binding.swipeRefreshLayout.setOnRefreshListener(() -> {
-            if (mode.equals(MODE_API) && lastMovieType != null) {
-                loadMovies(lastMovieType);
+            if (mode.equals(MODE_API)) {
+                String movieType = mainViewModel.getMovieType().getValue();
+                if (movieType != null) {
+                    loadMovies(movieType);
+                }
             } else if (mode.equals(MODE_FAVORITE)) {
                 viewModel.loadFavoriteMovies();
                 binding.swipeRefreshLayout.setRefreshing(false);
@@ -155,18 +159,15 @@ public class MovieListFragment extends Fragment {
         });
 
         mainViewModel.getIsGridMode().observe(getViewLifecycleOwner(), newGridMode -> {
-            // Lưu vị trí scroll trước khi chuyển đổi layout
             int firstVisiblePosition = getFirstVisibleItemPosition();
             mainViewModel.setScrollPosition(mode, firstVisiblePosition);
             Log.d("MovieListFragment", "Saved scroll position before layout change: " + firstVisiblePosition + " for mode: " + mode);
 
             isGridMode = newGridMode;
-            // Gỡ bỏ OnScrollListener để ngăn chặn việc ghi đè scrollPosition
             binding.recyclerView.removeOnScrollListener(scrollListener);
             switchLayoutManager(isGridMode);
             adapter.setGridMode(isGridMode);
 
-            // Khôi phục vị trí scroll sau khi layout hoàn tất và dữ liệu đã được tải
             binding.recyclerView.post(() -> {
                 Integer savedPosition = mainViewModel.getScrollPosition(mode).getValue();
                 if (savedPosition != null && savedPosition >= 0 && savedPosition < adapter.getItemCount()) {
@@ -175,16 +176,18 @@ public class MovieListFragment extends Fragment {
                 } else {
                     Log.d("MovieListFragment", "Cannot restore scroll position after layout change. Saved position: " + savedPosition + ", Item count: " + adapter.getItemCount() + " for mode: " + mode);
                 }
-                // Thêm lại OnScrollListener sau khi khôi phục vị trí scroll
                 binding.recyclerView.addOnScrollListener(scrollListener);
             });
         });
 
         mainViewModel.getMovieType().observe(getViewLifecycleOwner(), movieType -> {
             if (movieType != null) {
+                String lastMovieType = mainViewModel.getLastMovieType(mode).getValue();
+                if (lastMovieType == null || !lastMovieType.equals(movieType)) {
+                    mainViewModel.setShouldResetPosition(true);
+                    Log.d("MovieListFragment", "Movie type changed to: " + movieType + ", shouldResetPosition set to true");
+                }
                 loadMovies(movieType);
-                mainViewModel.setShouldResetPosition(true);
-                Log.d("MovieListFragment", "Movie type changed to: " + movieType + ", shouldResetPosition set to true");
             }
         });
 
@@ -194,6 +197,7 @@ public class MovieListFragment extends Fragment {
                 Log.d("MovieListFragment", "Favorite movies received: " + (movies != null ? movies.size() : "null"));
                 if (movies != null) {
                     fullFavoriteMovies = new ArrayList<>(movies);
+                    mainViewModel.setLoadedMovies(mode, fullFavoriteMovies);
                     String currentQuery = mainViewModel.getSearchQuery().getValue();
                     List<Movie> filteredMovies;
                     if (currentQuery == null || currentQuery.trim().isEmpty()) {
@@ -205,8 +209,6 @@ public class MovieListFragment extends Fragment {
                                 .collect(Collectors.toList());
                     }
                     adapter.submitData(getViewLifecycleOwner().getLifecycle(), PagingData.from(filteredMovies));
-                    // Khôi phục vị trí scroll sau khi dữ liệu được tải
-                    restoreScrollPosition("favorites");
                 }
             });
 
@@ -222,10 +224,14 @@ public class MovieListFragment extends Fragment {
                                 .collect(Collectors.toList());
                     }
                     adapter.submitData(getViewLifecycleOwner().getLifecycle(), PagingData.from(filteredMovies));
-                    // Khôi phục vị trí scroll sau khi lọc
-                    restoreScrollPosition("search");
                 }
             });
+        } else {
+            List<Movie> loadedMovies = mainViewModel.getLoadedMovies(mode).getValue();
+            if (loadedMovies != null && !loadedMovies.isEmpty()) {
+                adapter.submitData(getViewLifecycleOwner().getLifecycle(), PagingData.from(loadedMovies));
+                Log.d("MovieListFragment", "Restored loaded movies from ViewModel: " + loadedMovies.size() + " for mode: " + mode);
+            }
         }
 
         scrollListener = new RecyclerView.OnScrollListener() {
@@ -235,7 +241,8 @@ public class MovieListFragment extends Fragment {
                 int firstVisiblePosition = getFirstVisibleItemPosition();
                 if (firstVisiblePosition != RecyclerView.NO_POSITION) {
                     mainViewModel.setScrollPosition(mode, firstVisiblePosition);
-                    Log.d("MovieListFragment", "Saved scroll position: " + firstVisiblePosition + " for mode: " + mode);
+                    mainViewModel.setPageIndex(mode, (firstVisiblePosition / pageSize) + 1);
+                    Log.d("MovieListFragment", "Saved scroll position: " + firstVisiblePosition + ", pageIndex: " + ((firstVisiblePosition / pageSize) + 1) + " for mode: " + mode);
                 }
             }
         };
@@ -245,29 +252,58 @@ public class MovieListFragment extends Fragment {
             if (loadStates.getRefresh() instanceof LoadState.NotLoading &&
                     loadStates.getAppend() instanceof LoadState.NotLoading &&
                     loadStates.getPrepend() instanceof LoadState.NotLoading) {
+                List<Movie> currentMovies = new ArrayList<>();
+                for (int i = 0; i < adapter.getItemCount(); i++) {
+                    Movie movie = adapter.peek(i);
+                    if (movie != null) {
+                        currentMovies.add(movie);
+                    }
+                }
+                if (!currentMovies.isEmpty()) {
+                    mainViewModel.setLoadedMovies(mode, currentMovies);
+                    Log.d("MovieListFragment", "Saved " + currentMovies.size() + " movies to ViewModel for mode: " + mode);
+                }
+
                 Boolean shouldReset = mainViewModel.getShouldResetPosition().getValue();
                 if (shouldReset != null && shouldReset) {
                     binding.recyclerView.scrollToPosition(0);
                     mainViewModel.setScrollPosition(mode, 0);
+                    mainViewModel.setPageIndex(mode, 1);
                     mainViewModel.setShouldResetPosition(false);
+                    hasRestoredScrollPosition = true;
                     Log.d("MovieListFragment", "Reset scroll position to 0 due to category change for mode: " + mode);
-                } else {
-                    restoreScrollPosition("load");
+                } else if (!hasRestoredScrollPosition) {
+                    Integer targetScrollPosition = mainViewModel.getScrollPosition(mode).getValue();
+                    if (targetScrollPosition != null && targetScrollPosition >= 0) {
+                        int currentItemCount = adapter.getItemCount();
+                        if (targetScrollPosition < currentItemCount) {
+                            binding.recyclerView.scrollToPosition(targetScrollPosition);
+                            hasRestoredScrollPosition = true;
+                            Log.d("MovieListFragment", "Restored scroll position to: " + targetScrollPosition + ", Item count: " + currentItemCount + " for mode: " + mode);
+                        } else {
+                            Log.d("MovieListFragment", "Data not enough to restore scroll position. Target: " + targetScrollPosition + ", Current item count: " + currentItemCount);
+                            if (currentItemCount > 0) {
+                                binding.recyclerView.scrollToPosition(currentItemCount - 1);
+                                Log.d("MovieListFragment", "Scrolled to last position: " + (currentItemCount - 1) + " to load more data");
+                            }
+                        }
+                    }
                 }
             }
             return null;
         });
+
+        if (mode.equals(MODE_API)) {
+            String movieType = mainViewModel.getMovieType().getValue();
+            if (movieType != null) {
+                loadMovies(movieType);
+            }
+        }
     }
 
     private void loadMovies(String movieType) {
-        boolean shouldResetPosition = lastMovieType == null || !lastMovieType.equals(movieType);
-        lastMovieType = movieType;
-
-        if (shouldResetPosition) {
-            mainViewModel.setScrollPosition(mode, 0);
-            mainViewModel.setShouldResetPosition(true);
-            Log.d("MovieListFragment", "Set scroll position to 0 and shouldResetPosition to true due to movie type change: " + movieType + " for mode: " + mode);
-        }
+        String lastMovieType = mainViewModel.getLastMovieType(mode).getValue();
+        mainViewModel.setLastMovieType(mode, movieType);
 
         if (binding.swipeRefreshLayout.isRefreshing()) {
             binding.swipeRefreshLayout.setRefreshing(true);
@@ -311,25 +347,12 @@ public class MovieListFragment extends Fragment {
         return RecyclerView.NO_POSITION;
     }
 
-    private void restoreScrollPosition(String source) {
-        Integer savedPosition = mainViewModel.getScrollPosition(mode).getValue();
-        if (savedPosition != null && savedPosition >= 0 && savedPosition < adapter.getItemCount()) {
-            binding.recyclerView.scrollToPosition(savedPosition);
-            Log.d("MovieListFragment", "Restored scroll position after " + source + " to: " + savedPosition + ", Item count: " + adapter.getItemCount() + " for mode: " + mode);
-        } else if (savedPosition != null && savedPosition > 0) {
-            // Thử lại sau 100ms nếu dữ liệu chưa tải xong
-            binding.recyclerView.postDelayed(() -> restoreScrollPosition(source), 100);
-            Log.d("MovieListFragment", "Retrying scroll position restore after " + source + ". Saved position: " + savedPosition + ", Item count: " + adapter.getItemCount() + " for mode: " + mode);
-        } else {
-            Log.d("MovieListFragment", "Cannot restore scroll position after " + source + ". Saved position: " + savedPosition + ", Item count: " + adapter.getItemCount() + " for mode: " + mode);
-        }
-    }
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding.recyclerView.removeOnScrollListener(scrollListener);
         disposables.clear();
         binding = null;
+        hasRestoredScrollPosition = false;
     }
 }

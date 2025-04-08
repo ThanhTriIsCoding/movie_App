@@ -1,4 +1,4 @@
-package com.example.ojt_aada_mockproject1_trint28.worker;
+package com.example.ojt_aada_mockproject1_trint28.presentation.worker;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;

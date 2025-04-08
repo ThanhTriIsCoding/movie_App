@@ -28,7 +28,7 @@
         tools:ignore="SelectedPhotoAccess" />
 
     <application
-        android:name=".MyApplication"
+        android:name=".domain.di.module.MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

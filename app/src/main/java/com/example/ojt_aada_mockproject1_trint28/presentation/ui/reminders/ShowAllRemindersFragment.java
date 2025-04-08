@@ -1,9 +1,6 @@
 package com.example.ojt_aada_mockproject1_trint28.presentation.ui.reminders;
 
 import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,12 +12,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentShowAllRemindersBinding;
 import com.example.ojt_aada_mockproject1_trint28.presentation.adapter.ShowAllRemindersAdapter;
-import com.example.ojt_aada_mockproject1_trint28.worker.ReminderWorker;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
