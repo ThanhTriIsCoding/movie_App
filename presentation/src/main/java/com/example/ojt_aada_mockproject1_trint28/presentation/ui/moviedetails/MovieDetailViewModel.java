@@ -2,8 +2,9 @@ package com.example.ojt_aada_mockproject1_trint28.presentation.ui.moviedetails;
 
 import android.util.Log;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.paging.PagingData;
-
 
 import com.example.domain.model.CastCrew;
 import com.example.domain.model.Movie;
@@ -28,6 +29,7 @@ public class MovieDetailViewModel extends androidx.lifecycle.ViewModel {
     private final MovieUseCases movieUseCases;
     private final ReminderUseCases reminderUseCases;
     private final String apiKey;
+    private final MutableLiveData<Boolean> isMovieLiked = new MutableLiveData<>();
 
     @Inject
     public MovieDetailViewModel(
@@ -58,7 +60,8 @@ public class MovieDetailViewModel extends androidx.lifecycle.ViewModel {
                 movie.getPosterUrl(),
                 true
         );
-        return movieUseCases.addFavoriteMovie(updatedMovie, 1);
+        return movieUseCases.addFavoriteMovie(updatedMovie, 1)
+                .doOnComplete(() -> isMovieLiked.postValue(true)); // Update LiveData after adding
     }
 
     public Completable removeFavoriteMovie(Movie movie) {
@@ -72,11 +75,17 @@ public class MovieDetailViewModel extends androidx.lifecycle.ViewModel {
                 movie.getPosterUrl(),
                 false
         );
-        return movieUseCases.removeFavoriteMovie(updatedMovie, 1);
+        return movieUseCases.removeFavoriteMovie(updatedMovie, 1)
+                .doOnComplete(() -> isMovieLiked.postValue(false)); // Update LiveData after removing
     }
 
     public Single<Boolean> isMovieLiked(int movieId) {
-        return movieUseCases.isMovieLiked(movieId, 1);
+        return movieUseCases.isMovieLiked(movieId, 1)
+                .doOnSuccess(isLiked -> isMovieLiked.postValue(isLiked)); // Initialize LiveData
+    }
+
+    public LiveData<Boolean> getIsMovieLikedLiveData() {
+        return isMovieLiked;
     }
 
     public Completable addReminder(Reminder reminder) {
@@ -85,7 +94,7 @@ public class MovieDetailViewModel extends androidx.lifecycle.ViewModel {
 
     public Single<List<Reminder>> checkReminderConflict(int movieId, String dateTime) {
         return reminderUseCases.getReminders()
-                .firstOrError() // Lấy giá trị đầu tiên từ Flowable và chuyển thành Single
+                .firstOrError()
                 .map(reminders -> {
                     List<Reminder> conflictingReminders = new ArrayList<>();
                     for (Reminder reminder : reminders) {

@@ -80,6 +80,17 @@ public class MovieDetailFragment extends Fragment {
             loadMovieDetails(movie.getId());
             loadCastCrew(movie.getId());
             setupInitialUI(movie);
+
+            // Observe isLiked status
+            viewModel.getIsMovieLikedLiveData().observe(getViewLifecycleOwner(), isLiked -> {
+                if (isLiked != null) {
+                    movie.setLiked(isLiked);
+                    updateStarIcon(isLiked);
+                }
+            });
+
+            // Initial check for isLiked status
+            checkInitialLikedStatus(movie.getId());
         }
 
         // Set up star click listener
@@ -150,6 +161,24 @@ public class MovieDetailFragment extends Fragment {
         );
     }
 
+    private void checkInitialLikedStatus(int movieId) {
+        disposables.add(
+                viewModel.isMovieLiked(movieId)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                isLiked -> {
+                                    movie.setLiked(isLiked);
+                                    updateStarIcon(isLiked);
+                                },
+                                throwable -> {
+                                    Log.e("MovieDetailFragment", "Error checking initial isLiked: " + throwable.getMessage());
+                                    Toast.makeText(getContext(), "Error checking favorite status", Toast.LENGTH_SHORT).show();
+                                }
+                        )
+        );
+    }
+
     private void toggleFavorite() {
         disposables.add(
                 viewModel.isMovieLiked(movie.getId())
@@ -164,8 +193,6 @@ public class MovieDetailFragment extends Fragment {
                                                         .observeOn(AndroidSchedulers.mainThread())
                                                         .subscribe(
                                                                 () -> {
-                                                                    movie.setLiked(false);
-                                                                    updateStarIcon(false);
                                                                     Toast.makeText(getContext(), "Removed from favorites", Toast.LENGTH_SHORT).show();
                                                                 },
                                                                 throwable -> {
@@ -181,8 +208,6 @@ public class MovieDetailFragment extends Fragment {
                                                         .observeOn(AndroidSchedulers.mainThread())
                                                         .subscribe(
                                                                 () -> {
-                                                                    movie.setLiked(true);
-                                                                    updateStarIcon(true);
                                                                     Toast.makeText(getContext(), "Added to favorites", Toast.LENGTH_SHORT).show();
                                                                 },
                                                                 throwable -> {
@@ -223,23 +248,19 @@ public class MovieDetailFragment extends Fragment {
                                     Date reminderDate = sdf.parse(selectedDateTime);
                                     long delay = reminderDate.getTime() - System.currentTimeMillis();
 
-                                    // Kiểm tra thời gian quá khứ
                                     if (delay <= 0) {
                                         Toast.makeText(getContext(), "Cannot set reminder for a past time", Toast.LENGTH_SHORT).show();
-                                        return; // Dừng ngay nếu thời gian trong quá khứ
+                                        return;
                                     }
 
-                                    // Kiểm tra xung đột và thêm reminder
                                     disposables.add(
                                             viewModel.checkReminderConflict(movie.getId(), selectedDateTime)
-                                                    .subscribeOn(Schedulers.io()) // Chạy kiểm tra xung đột trên IO thread
+                                                    .subscribeOn(Schedulers.io())
                                                     .flatMap(reminders -> {
-                                                        Log.d("MovieDetailFragment", "Received reminders: size=" + reminders.size() + ", content=" + reminders.toString());
+                                                        Log.d("MovieDetailFragment", "Received reminders: size=" + reminders.size());
                                                         if (!reminders.isEmpty()) {
-                                                            Log.d("MovieDetailFragment", "Conflict found for movieId=" + movie.getId() + ", dateTime=" + selectedDateTime);
                                                             return Single.error(new IllegalStateException("Reminder conflict"));
                                                         } else {
-                                                            Log.d("MovieDetailFragment", "No conflict found, adding reminder");
                                                             String posterUrl = movie.getPosterUrl() != null && !movie.getPosterUrl().isEmpty()
                                                                     ? "https://image.tmdb.org/t/p/w500" + movie.getPosterUrl()
                                                                     : "";
@@ -251,11 +272,11 @@ public class MovieDetailFragment extends Fragment {
                                                                     movie.getReleaseDate() != null ? movie.getReleaseDate() : "",
                                                                     movie.getVoteAverage()
                                                             );
-                                                            return viewModel.addReminder(reminder) // Chạy trên IO thread
+                                                            return viewModel.addReminder(reminder)
                                                                     .toSingleDefault("Success");
                                                         }
                                                     })
-                                                    .observeOn(AndroidSchedulers.mainThread()) // Chuyển sang main thread để cập nhật UI
+                                                    .observeOn(AndroidSchedulers.mainThread())
                                                     .subscribe(
                                                             result -> {
                                                                 Log.d("MovieDetailFragment", "Reminder added successfully");
@@ -278,7 +299,6 @@ public class MovieDetailFragment extends Fragment {
                                                                 if (throwable instanceof IllegalStateException) {
                                                                     Toast.makeText(getContext(), "A reminder for this movie at this time already exists!", Toast.LENGTH_SHORT).show();
                                                                 } else {
-                                                                    Log.e("MovieDetailFragment", "Error setting reminder: " + throwable.getMessage(), throwable);
                                                                     Toast.makeText(getContext(), "Error setting reminder", Toast.LENGTH_SHORT).show();
                                                                 }
                                                             }
