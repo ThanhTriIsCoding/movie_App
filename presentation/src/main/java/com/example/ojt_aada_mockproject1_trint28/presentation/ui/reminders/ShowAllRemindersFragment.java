@@ -29,7 +29,7 @@ public class ShowAllRemindersFragment extends Fragment {
     private ShowAllRemindersViewModel viewModel;
     private ShowAllRemindersAdapter adapter;
     private NavController navController;
-    private boolean isNavigating = false; // Flag to prevent re-navigation
+    private boolean isNavigating = false;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -54,24 +54,22 @@ public class ShowAllRemindersFragment extends Fragment {
             adapter.setReminders(reminders);
         });
 
-        // Observe navigation event with safeguard
         viewModel.navigateToMovieDetail.observe(getViewLifecycleOwner(), reminder -> {
             if (reminder != null && !isNavigating) {
-                isNavigating = true; // Set flag to prevent re-trigger
+                isNavigating = true;
                 Movie movie = new Movie(
                         reminder.getMovieId(),
                         reminder.getTitle(),
-                        "", // Overview not available
+                        "",
                         reminder.getReleaseDate(),
                         reminder.getVoteAverage(),
-                        false, // Adult status
+                        false,
                         reminder.getPosterUrl(),
-                        false // isLiked status
+                        false
                 );
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("movie", movie);
                 navController.navigate(R.id.action_showAllRemindersFragment_to_movieDetailsFragment, bundle);
-                // Reset flag after navigation completes
                 getViewLifecycleOwner().getLifecycle().addObserver(new androidx.lifecycle.LifecycleEventObserver() {
                     @Override
                     public void onStateChanged(@NonNull androidx.lifecycle.LifecycleOwner source, @NonNull androidx.lifecycle.Lifecycle.Event event) {

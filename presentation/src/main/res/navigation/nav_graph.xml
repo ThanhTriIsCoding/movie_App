@@ -4,49 +4,50 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/movieListFragment">
 
-    <!-- Movies / Favourite Tab -->
+    <!-- Movie List Fragment (Tab Movies / Favourite) -->
     <fragment
         android:id="@+id/movieListFragment"
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.movielist.MovieListFragment"
         android:label="Movie List">
+        <!-- Argument: Mode (API or Favourite) -->
         <argument
             android:name="mode"
             app:argType="string"
             android:defaultValue="api" />
-        <!-- Đi tới Movie Details -->
+        <!-- Di chuyển từ MovieList đến MovieDetails -->
         <action
             android:id="@+id/action_movieListFragment_to_movieDetailFragment"
             app:destination="@id/movieDetailsFragment" />
-        <!-- Đi tới Settings -->
+        <!-- Di chuyển từ MovieList đến Settings -->
         <action
             android:id="@+id/action_movieListFragment_to_settingsFragment"
             app:destination="@id/settingsFragment"
             app:popUpTo="@id/movieListFragment"
             app:popUpToInclusive="true" />
-        <!-- Đi tới About -->
+        <!-- Di chuyển từ MovieList đến About -->
         <action
             android:id="@+id/action_movieListFragment_to_aboutFragment"
             app:destination="@id/aboutFragment"
             app:popUpTo="@id/movieListFragment"
             app:popUpToInclusive="true" />
-        <!-- Đi tới Show All Reminders -->
+        <!-- Di chuyển từ MovieList đến All Reminders -->
         <action
             android:id="@+id/action_movieListFragment_to_showAllRemindersFragment"
             app:destination="@id/showAllRemindersFragment" />
     </fragment>
 
-    <!-- Settings Tab -->
+    <!-- Settings Fragment -->
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.settings.SettingsFragment"
         android:label="Settings">
-        <!-- Đi tới Movie List -->
+        <!-- Di chuyển từ Settings đến MovieList -->
         <action
             android:id="@+id/action_settingsFragment_to_movieListFragment"
             app:destination="@id/movieListFragment"
             app:popUpTo="@id/movieListFragment"
             app:popUpToInclusive="true" />
-        <!-- Đi tới About -->
+        <!-- Di chuyển từ Settings đến About -->
         <action
             android:id="@+id/action_settingsFragment_to_aboutFragment"
             app:destination="@id/aboutFragment"
@@ -54,18 +55,18 @@
             app:popUpToInclusive="true" />
     </fragment>
 
-    <!-- About Tab -->
+    <!-- About Fragment -->
     <fragment
         android:id="@+id/aboutFragment"
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.about.AboutFragment"
         android:label="About">
-        <!-- Đi tới Movie List -->
+        <!-- Di chuyển từ About đến MovieList -->
         <action
             android:id="@+id/action_aboutFragment_to_movieListFragment"
             app:destination="@id/movieListFragment"
             app:popUpTo="@id/movieListFragment"
             app:popUpToInclusive="true" />
-        <!-- Đi tới Settings -->
+        <!-- Di chuyển từ About đến Settings -->
         <action
             android:id="@+id/action_aboutFragment_to_settingsFragment"
             app:destination="@id/settingsFragment"
@@ -78,13 +79,17 @@
         android:id="@+id/movieDetailsFragment"
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.moviedetails.MovieDetailFragment"
         android:label="Movie Details">
-        <!-- Quay lại Movie List -->
+        <!-- Argument: Movie Object -->
+        <argument
+            android:name="movie"
+            app:argType="com.example.domain.model.Movie" />
+        <!-- Di chuyển từ MovieDetails đến MovieList -->
         <action
             android:id="@+id/action_movieDetailsFragment_to_movieListFragment"
             app:destination="@id/movieListFragment"
             app:popUpTo="@id/movieListFragment"
             app:popUpToInclusive="false" />
-        <!-- Đi tới Show All Reminders -->
+        <!-- Di chuyển từ MovieDetails đến All Reminders -->
         <action
             android:id="@+id/action_movieDetailsFragment_to_showAllRemindersFragment"
             app:destination="@id/showAllRemindersFragment" />
@@ -95,25 +100,26 @@
         android:id="@+id/showAllRemindersFragment"
         android:name="com.example.ojt_aada_mockproject1_trint28.presentation.ui.reminders.ShowAllRemindersFragment"
         android:label="All Reminders">
-        <!-- Quay lại Movie List -->
+        <!-- Di chuyển từ ShowAllReminders đến MovieList -->
         <action
             android:id="@+id/action_showAllRemindersFragment_to_movieListFragment"
             app:destination="@id/movieListFragment"
             app:popUpTo="@id/movieListFragment"
             app:popUpToInclusive="false" />
-        <!-- Đi tới Movie Details -->
+        <!-- Di chuyển từ ShowAllReminders đến MovieDetails -->
         <action
             android:id="@+id/action_showAllRemindersFragment_to_movieDetailsFragment"
             app:destination="@id/movieDetailsFragment" />
     </fragment>
 
-    <!-- Global actions for Navigation Drawer -->
+    <!-- Global Actions -->
+    <!-- Di chuyển đến MovieDetails từ bất kỳ fragment nào -->
     <action
         android:id="@+id/action_global_movieDetailsFragment"
         app:destination="@id/movieDetailsFragment"
         app:popUpTo="@id/movieListFragment"
         app:popUpToInclusive="false" />
-
+    <!-- Di chuyển đến All Reminders từ bất kỳ fragment nào -->
     <action
         android:id="@+id/action_global_showAllRemindersFragment"
         app:destination="@id/showAllRemindersFragment"

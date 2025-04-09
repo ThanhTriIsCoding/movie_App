@@ -13,27 +13,49 @@ import java.util.List;
 import javax.inject.Inject;
 
 public class MainViewModel extends ViewModel {
-    private final MutableLiveData<Boolean> isGridMode = new MutableLiveData<>(false); // Chế độ mặc định là danh sách
-    private final MutableLiveData<String> movieType = new MutableLiveData<>("popular"); // Loại phim mặc định là "popular"
-    private final MutableLiveData<Integer> selectedTabPosition = new MutableLiveData<>(0); // Vị trí tab được chọn mặc định là 0 (tab đầu tiên)
-    private final MutableLiveData<Boolean> isGridIconVisible = new MutableLiveData<>(true); // Biểu tượng lưới
-    private final MutableLiveData<Boolean> isSearchIconVisible = new MutableLiveData<>(false); // Biểu tượng tìm kiếm
-    private final MutableLiveData<Boolean> isCloseIconVisible = new MutableLiveData<>(false); // Biểu tượng đóng
-    private final MutableLiveData<Boolean> isSearchViewVisible = new MutableLiveData<>(false); // Khung tìm kiếm
-    private final MutableLiveData<String> searchQuery = new MutableLiveData<>(""); // Truy vấn tìm kiếm mặc định là rỗng
-    private final MutableLiveData<Integer> scrollPositionApi = new MutableLiveData<>(0); // Vị trí cuộn tab movieList, mặc định là 0
-    private final MutableLiveData<Integer> scrollPositionFavorite = new MutableLiveData<>(0); // Vị trí cuộn movieListFavourite, mặc định là 0
-    private final MutableLiveData<Integer> pageIndexApi = new MutableLiveData<>(1); // Chỉ số trang mặc định là 1
-    private final MutableLiveData<Integer> pageIndexFavorite = new MutableLiveData<>(1);  // Chỉ số trang mặc định là 1
-    private final MutableLiveData<List<Movie>> loadedMoviesApi = new MutableLiveData<>(new ArrayList<>()); // Lưu trữ danh sách phim đã tải về từ API
-    private final MutableLiveData<List<Movie>> loadedMoviesFavorite = new MutableLiveData<>(new ArrayList<>()); // Lưu trữ danh sách phim yêu thích
-    private final MutableLiveData<Boolean> shouldResetPosition = new MutableLiveData<>(false); // Biến này sẽ được sử dụng để xác định xem có nên đặt lại vị trí cuộn hay không
-    private final MutableLiveData<String> lastMovieTypeApi = new MutableLiveData<>("popular"); // Loại phim cuối cùng được chọn từ API
-    private final MutableLiveData<String> lastMovieTypeFavorite = new MutableLiveData<>("favorite"); // Loại phim cuối cùng được chọn từ danh sách yêu thích
-    private final MutableLiveData<Movie> lastSelectedMovieApi = new MutableLiveData<>(); // Lưu trữ phim cuối cùng được chọn từ API
-    private final MutableLiveData<Movie> lastSelectedMovieFavorite = new MutableLiveData<>();  // Lưu trữ phim cuối cùng được chọn từ danh sách yêu thích
 
-    // Thêm hai biến để theo dõi trạng thái isInMovieDetail riêng biệt cho từng tab
+    // Biến lưu trạng thái hiển thị danh sách hoặc lưới
+    private final MutableLiveData<Boolean> isGridMode = new MutableLiveData<>(false);
+
+    // Biến lưu loại phim hiện tại (popular, top-rated, v.v.)
+    private final MutableLiveData<String> movieType = new MutableLiveData<>("popular");
+
+    // Biến lưu tab đang được chọn
+    private final MutableLiveData<Integer> selectedTabPosition = new MutableLiveData<>(0);
+
+    // Biến lưu trạng thái hiển thị các biểu tượng trên thanh công cụ
+    private final MutableLiveData<Boolean> isGridIconVisible = new MutableLiveData<>(true);
+    private final MutableLiveData<Boolean> isSearchIconVisible = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> isCloseIconVisible = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> isSearchViewVisible = new MutableLiveData<>(false);
+
+    // Biến lưu truy vấn tìm kiếm
+    private final MutableLiveData<String> searchQuery = new MutableLiveData<>("");
+
+    // Biến lưu vị trí cuộn của danh sách phim
+    private final MutableLiveData<Integer> scrollPositionApi = new MutableLiveData<>(0);
+    private final MutableLiveData<Integer> scrollPositionFavorite = new MutableLiveData<>(0);
+
+    // Biến lưu chỉ số trang hiện tại
+    private final MutableLiveData<Integer> pageIndexApi = new MutableLiveData<>(1);
+    private final MutableLiveData<Integer> pageIndexFavorite = new MutableLiveData<>(1);
+
+    // Biến lưu danh sách phim đã tải
+    private final MutableLiveData<List<Movie>> loadedMoviesApi = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<Movie>> loadedMoviesFavorite = new MutableLiveData<>(new ArrayList<>());
+
+    // Biến kiểm tra xem có cần reset vị trí cuộn không
+    private final MutableLiveData<Boolean> shouldResetPosition = new MutableLiveData<>(false);
+
+    // Biến lưu loại phim cuối cùng được chọn
+    private final MutableLiveData<String> lastMovieTypeApi = new MutableLiveData<>("popular");
+    private final MutableLiveData<String> lastMovieTypeFavorite = new MutableLiveData<>("favorite");
+
+    // Biến lưu phim cuối cùng được chọn
+    private final MutableLiveData<Movie> lastSelectedMovieApi = new MutableLiveData<>();
+    private final MutableLiveData<Movie> lastSelectedMovieFavorite = new MutableLiveData<>();
+
+    // Biến lưu trạng thái đang ở chi tiết phim
     private final MutableLiveData<Boolean> isInMovieDetailApi = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> isInMovieDetailFavorite = new MutableLiveData<>(false);
 
@@ -43,6 +65,7 @@ public class MainViewModel extends ViewModel {
         selectedTabPosition.setValue(0);
     }
 
+    // Trạng thái hiển thị lưới hoặc danh sách
     public LiveData<Boolean> getIsGridMode() {
         return isGridMode;
     }
@@ -54,10 +77,11 @@ public class MainViewModel extends ViewModel {
     public void toggleDisplayMode() {
         Boolean currentMode = isGridMode.getValue();
         if (currentMode != null) {
-            isGridMode.setValue(!currentMode);
+            isGridMode.setValue(!currentMode); // Chuyển đổi giữa lưới và danh sách
         }
     }
 
+    // Loại phim hiện tại
     public LiveData<String> getMovieType() {
         return movieType;
     }
@@ -66,6 +90,7 @@ public class MainViewModel extends ViewModel {
         movieType.setValue(type);
     }
 
+    // Tab đang được chọn
     public LiveData<Integer> getSelectedTabPosition() {
         return selectedTabPosition;
     }
@@ -74,6 +99,7 @@ public class MainViewModel extends ViewModel {
         selectedTabPosition.setValue(position);
     }
 
+    // Biểu tượng lưới
     public LiveData<Boolean> getIsGridIconVisible() {
         return isGridIconVisible;
     }
@@ -82,6 +108,7 @@ public class MainViewModel extends ViewModel {
         isGridIconVisible.setValue(visible);
     }
 
+    // Biểu tượng tìm kiếm
     public LiveData<Boolean> getIsSearchIconVisible() {
         return isSearchIconVisible;
     }
@@ -90,6 +117,7 @@ public class MainViewModel extends ViewModel {
         isSearchIconVisible.setValue(visible);
     }
 
+    // Biểu tượng đóng
     public LiveData<Boolean> getIsCloseIconVisible() {
         return isCloseIconVisible;
     }
@@ -98,6 +126,7 @@ public class MainViewModel extends ViewModel {
         isCloseIconVisible.setValue(visible);
     }
 
+    // Thanh tìm kiếm
     public LiveData<Boolean> getIsSearchViewVisible() {
         return isSearchViewVisible;
     }
@@ -106,6 +135,7 @@ public class MainViewModel extends ViewModel {
         isSearchViewVisible.setValue(visible);
     }
 
+    // Truy vấn tìm kiếm
     public LiveData<String> getSearchQuery() {
         return searchQuery;
     }
@@ -115,12 +145,13 @@ public class MainViewModel extends ViewModel {
     }
 
     public void clearSearch() {
-        searchQuery.setValue("");
-        setSearchViewVisible(false);
-        setSearchIconVisible(true);
-        setCloseIconVisible(false);
+        searchQuery.setValue(""); // Xóa nội dung tìm kiếm
+        setSearchViewVisible(false); // Ẩn thanh tìm kiếm
+        setSearchIconVisible(true); // Hiển thị biểu tượng tìm kiếm
+        setCloseIconVisible(false); // Ẩn biểu tượng đóng
     }
 
+    // Vị trí cuộn
     public LiveData<Integer> getScrollPosition(String mode) {
         return mode.equals(MovieListFragment.MODE_API) ? scrollPositionApi : scrollPositionFavorite;
     }
@@ -133,6 +164,7 @@ public class MainViewModel extends ViewModel {
         }
     }
 
+    // Chỉ số trang
     public LiveData<Integer> getPageIndex(String mode) {
         return mode.equals(MovieListFragment.MODE_API) ? pageIndexApi : pageIndexFavorite;
     }
@@ -145,6 +177,7 @@ public class MainViewModel extends ViewModel {
         }
     }
 
+    // Danh sách phim đã tải
     public LiveData<List<Movie>> getLoadedMovies(String mode) {
         return mode.equals(MovieListFragment.MODE_API) ? loadedMoviesApi : loadedMoviesFavorite;
     }
@@ -160,6 +193,7 @@ public class MainViewModel extends ViewModel {
         }
     }
 
+    // Trạng thái reset vị trí
     public LiveData<Boolean> getShouldResetPosition() {
         return shouldResetPosition;
     }
@@ -168,8 +202,7 @@ public class MainViewModel extends ViewModel {
         shouldResetPosition.setValue(reset);
     }
 
-    // Xóa phương thức getIsInMovieDetail và setIsInMovieDetail cũ
-    // Thay bằng các phương thức riêng biệt cho từng tab
+    // Trạng thái chi tiết phim
     public LiveData<Boolean> getIsInMovieDetail(String mode) {
         return mode.equals(MovieListFragment.MODE_API) ? isInMovieDetailApi : isInMovieDetailFavorite;
     }
@@ -182,6 +215,7 @@ public class MainViewModel extends ViewModel {
         }
     }
 
+    // Loại phim cuối cùng được chọn
     public LiveData<String> getLastMovieType(String mode) {
         return mode.equals(MovieListFragment.MODE_API) ? lastMovieTypeApi : lastMovieTypeFavorite;
     }
@@ -194,6 +228,7 @@ public class MainViewModel extends ViewModel {
         }
     }
 
+    // Phim cuối cùng được chọn
     public LiveData<Movie> getLastSelectedMovie(String mode) {
         return mode.equals(MovieListFragment.MODE_API) ? lastSelectedMovieApi : lastSelectedMovieFavorite;
     }

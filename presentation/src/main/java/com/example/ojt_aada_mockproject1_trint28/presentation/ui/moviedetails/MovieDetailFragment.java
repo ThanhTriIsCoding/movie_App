@@ -13,6 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
@@ -49,6 +51,7 @@ public class MovieDetailFragment extends Fragment {
     private final CompositeDisposable disposables = new CompositeDisposable();
     private Movie movie;
     private String selectedDateTime;
+    private NavController navController;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -68,20 +71,18 @@ public class MovieDetailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        navController = Navigation.findNavController(view);
         viewModel = new ViewModelProvider(this).get(MovieDetailViewModel.class);
 
-        // Set up the cast & crew RecyclerView
         castCrewAdapter = new CastCrewAdapter();
         binding.rvCastCrew.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.rvCastCrew.setAdapter(castCrewAdapter);
 
-        // Load movie details and cast & crew
         if (movie != null) {
             loadMovieDetails(movie.getId());
             loadCastCrew(movie.getId());
             setupInitialUI(movie);
 
-            // Observe isLiked status
             viewModel.getIsMovieLikedLiveData().observe(getViewLifecycleOwner(), isLiked -> {
                 if (isLiked != null) {
                     movie.setLiked(isLiked);
@@ -89,14 +90,10 @@ public class MovieDetailFragment extends Fragment {
                 }
             });
 
-            // Initial check for isLiked status
             checkInitialLikedStatus(movie.getId());
         }
 
-        // Set up star click listener
         binding.ivStar.setOnClickListener(v -> toggleFavorite());
-
-        // Set up reminder button
         binding.btnReminder.setOnClickListener(v -> showDateTimePicker());
     }
 
@@ -192,9 +189,7 @@ public class MovieDetailFragment extends Fragment {
                                                         .subscribeOn(Schedulers.io())
                                                         .observeOn(AndroidSchedulers.mainThread())
                                                         .subscribe(
-                                                                () -> {
-                                                                    Toast.makeText(getContext(), "Removed from favorites", Toast.LENGTH_SHORT).show();
-                                                                },
+                                                                () -> Toast.makeText(getContext(), "Removed from favorites", Toast.LENGTH_SHORT).show(),
                                                                 throwable -> {
                                                                     Log.e("MovieDetailFragment", "Error removing favorite: " + throwable.getMessage());
                                                                     Toast.makeText(getContext(), "Error removing favorite", Toast.LENGTH_SHORT).show();
@@ -207,9 +202,7 @@ public class MovieDetailFragment extends Fragment {
                                                         .subscribeOn(Schedulers.io())
                                                         .observeOn(AndroidSchedulers.mainThread())
                                                         .subscribe(
-                                                                () -> {
-                                                                    Toast.makeText(getContext(), "Added to favorites", Toast.LENGTH_SHORT).show();
-                                                                },
+                                                                () -> Toast.makeText(getContext(), "Added to favorites", Toast.LENGTH_SHORT).show(),
                                                                 throwable -> {
                                                                     Log.e("MovieDetailFragment", "Error adding favorite: " + throwable.getMessage());
                                                                     Toast.makeText(getContext(), "Error adding favorite", Toast.LENGTH_SHORT).show();

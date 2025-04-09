@@ -45,7 +45,7 @@ public class MovieListFragment extends Fragment {
     private MainViewModel mainViewModel;
     private MovieAdapter adapter;
     private final CompositeDisposable disposables = new CompositeDisposable();
-    private boolean isGridMode; // Chỉ áp dụng cho MODE_API
+    private boolean isGridMode;
     private String mode;
     private NavController navController;
     private List<Movie> fullFavoriteMovies;
@@ -82,27 +82,23 @@ public class MovieListFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         navController = Navigation.findNavController(view);
-
         viewModel = new ViewModelProvider(this).get(MovieListViewModel.class);
         mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
 
         viewModel.setMode(mode);
 
-        // Khởi tạo isGridMode dựa trên mode
         if (mode.equals(MODE_API)) {
             isGridMode = mainViewModel.getIsGridMode().getValue() != null && mainViewModel.getIsGridMode().getValue();
         } else {
-            isGridMode = false; // MODE_FAVORITE luôn là linear
+            isGridMode = false;
         }
         Log.d("MovieListFragment", "Initial isGridMode: " + isGridMode + " for mode: " + mode);
 
         adapter = new MovieAdapter(isGridMode, viewModel);
-
         binding.recyclerView.setAdapter(adapter);
         binding.recyclerView.setHasFixedSize(true);
         switchLayoutManager(isGridMode);
 
-        // Quan sát điều hướng đến MovieDetailFragment
         viewModel.getNavigateToMovieDetail().observe(getViewLifecycleOwner(), movie -> {
             if (movie != null) {
                 Bundle bundle = new Bundle();
@@ -113,7 +109,6 @@ public class MovieListFragment extends Fragment {
             }
         });
 
-        // Quan sát vị trí cần cập nhật trong RecyclerView
         viewModel.getNotifyItemChangedPosition().observe(getViewLifecycleOwner(), position -> {
             if (position != null) {
                 adapter.notifyItemChanged(position, "isLiked");
@@ -132,7 +127,6 @@ public class MovieListFragment extends Fragment {
             }
         });
 
-        // Chỉ quan sát isGridMode cho MODE_API
         if (mode.equals(MODE_API)) {
             mainViewModel.getIsGridMode().observe(getViewLifecycleOwner(), newGridMode -> {
                 int firstVisiblePosition = getFirstVisibleItemPosition();
@@ -156,13 +150,12 @@ public class MovieListFragment extends Fragment {
                 });
             });
         } else {
-            // MODE_FAVORITE: Đảm bảo luôn là linear
             switchLayoutManager(false);
             adapter.setGridMode(false);
         }
 
         mainViewModel.getMovieType().observe(getViewLifecycleOwner(), movieType -> {
-            if (movieType != null && mode.equals(MODE_API)) { // Chỉ áp dụng cho MODE_API
+            if (movieType != null && mode.equals(MODE_API)) {
                 String lastMovieType = mainViewModel.getLastMovieType(mode).getValue();
                 if (lastMovieType == null || !lastMovieType.equals(movieType)) {
                     mainViewModel.setShouldResetPosition(true);
@@ -313,7 +306,7 @@ public class MovieListFragment extends Fragment {
     public void switchLayoutManager(boolean isGridMode) {
         RecyclerView.LayoutManager newLayoutManager;
         if (mode.equals(MODE_FAVORITE)) {
-            newLayoutManager = new LinearLayoutManager(getContext()); // Luôn là linear cho MODE_FAVORITE
+            newLayoutManager = new LinearLayoutManager(getContext());
         } else {
             newLayoutManager = isGridMode ?
                     new GridLayoutManager(getContext(), 2) :
