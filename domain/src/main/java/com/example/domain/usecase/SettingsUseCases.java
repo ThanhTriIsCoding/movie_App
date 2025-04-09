@@ -17,7 +17,7 @@ public class SettingsUseCases {
     @Inject
     public SettingsUseCases(SettingsRepository settingsRepository) {
         this.settingsRepository = settingsRepository;
-        this.currentSettings = new Settings("Popular Movies", 5, 2015, "release_date");
+        this.currentSettings = new Settings("Popular Movies", 5, 2015, "release_date", 1); // Default pagesPerLoad = 1
         loadSettings();
     }
 
@@ -48,6 +48,11 @@ public class SettingsUseCases {
 
     public Completable updateSortBy(String sortBy) {
         currentSettings.setSortBy(sortBy);
+        return settingsRepository.updateSettings(currentSettings);
+    }
+
+    public Completable updatePagesPerLoad(int pages) {
+        currentSettings.setPagesPerLoad(pages);
         return settingsRepository.updateSettings(currentSettings);
     }
 

@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:theme="@style/CustomPreferenceTheme">
 
-    <!-- Phần FILTER -->
+    <!-- FILTER Section -->
     <com.example.data.custom.CustomPreferenceCategory
         android:title="FILTER"
         app:iconSpaceReserved="false" />
@@ -23,7 +23,7 @@
         android:title="From release year:"
         android:summary="2015" />
 
-    <!-- Phần SORT -->
+    <!-- SORT Section -->
     <com.example.data.custom.CustomPreferenceCategory
         android:title="SORT"
         app:iconSpaceReserved="false" />
@@ -33,7 +33,17 @@
         android:title="Sort By:"
         android:summary="Release Date" />
 
-    <!-- Nút Reset -->
+    <!-- NUMBER OF LOADING Section -->
+    <com.example.data.custom.CustomPreferenceCategory
+        android:title="NUMBER OF LOADING"
+        app:iconSpaceReserved="false" />
+
+    <com.example.data.custom.CustomPreference
+        android:key="pages_per_load"
+        android:title="Pages per Loading:"
+        android:summary="1" />
+
+    <!-- Reset Button -->
     <Preference
         android:key="reset_settings"
         android:title="Reset Settings"

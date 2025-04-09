@@ -13,6 +13,7 @@ import androidx.preference.PreferenceManager;
 
 import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentCategoryBinding;
+import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentPagesPerLoadBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentRatingFilterBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentReleaseYearBinding;
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentSortBinding;
@@ -68,12 +69,14 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         settingsViewModel.getRating().observe(this, rating -> updatePreferenceSummary(findPreference("rate")));
         settingsViewModel.getReleaseYear().observe(this, year -> updatePreferenceSummary(findPreference("release_year")));
         settingsViewModel.getSortBy().observe(this, sortBy -> updatePreferenceSummary(findPreference("sort_by")));
+        settingsViewModel.getPagesPerLoad().observe(this, pages -> updatePreferenceSummary(findPreference("pages_per_load")));
 
         // Setup preferences
         setupPreference(findPreference("category"), R.layout.fragment_category);
         setupPreference(findPreference("rate"), R.layout.fragment_rating_filter);
         setupPreference(findPreference("release_year"), R.layout.fragment_release_year);
         setupPreference(findPreference("sort_by"), R.layout.fragment_sort);
+        setupPreference(findPreference("pages_per_load"), R.layout.fragment_pages_per_load); // New preference
 
         // Setup reset button
         Preference resetPreference = findPreference("reset_settings");
@@ -112,6 +115,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             handleReleaseYearDialog(dialogView, dialog, preference);
         } else if (layoutResId == R.layout.fragment_sort) {
             handleSortDialog(dialogView, dialog, preference);
+        } else if (layoutResId == R.layout.fragment_pages_per_load) {
+            handlePagesPerLoadDialog(dialogView, dialog, preference);
         }
     }
 
@@ -143,6 +148,13 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         binding.setLifecycleOwner(this);
     }
 
+    private void handlePagesPerLoadDialog(View dialogView, AlertDialog dialog, Preference preference) {
+        FragmentPagesPerLoadBinding binding = FragmentPagesPerLoadBinding.bind(dialogView);
+        binding.setViewModel(settingsViewModel);
+        binding.setDialog(dialog);
+        binding.setLifecycleOwner(this);
+    }
+
     private void updatePreferenceSummary(Preference preference) {
         if (preference == null) return;
 
@@ -160,6 +172,9 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             case "sort_by":
                 String sortBy = settingsViewModel.getSortBy().getValue();
                 preference.setSummary(sortBy != null && sortBy.equals("release_date") ? "Release Date" : "Rating");
+                break;
+            case "pages_per_load":
+                preference.setSummary(String.valueOf(settingsViewModel.getPagesPerLoad().getValue()));
                 break;
         }
     }

@@ -46,32 +46,44 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
     @NonNull
     @Override
     public Single<LoadResult<Integer, Movie>> loadSingle(@NonNull LoadParams<Integer> params) {
-        int page = params.getKey() != null ? params.getKey() : 1;
+        int startPage = params.getKey() != null ? params.getKey() : 1;
+        int pagesToLoad = settings.getPagesPerLoad(); // Use the setting
         int userId = 1;
 
-        Single<MovieListResponse> request;
-        switch (movieType) {
-            case "top_rated":
-                request = apiService.getTopRatedMovies(apiKey, page);
-                break;
-            case "upcoming":
-                request = apiService.getUpcomingMovies(apiKey, page);
-                break;
-            case "now_playing":
-                request = apiService.getNowPlayingMovies(apiKey, page);
-                break;
-            case "popular":
-            default:
-                request = apiService.getPopularMovies(apiKey, page);
-                break;
+        List<Single<MovieListResponse>> requests = new ArrayList<>();
+        for (int i = 0; i < pagesToLoad; i++) {
+            int page = startPage + i;
+            Single<MovieListResponse> request;
+            switch (movieType) {
+                case "top_rated":
+                    request = apiService.getTopRatedMovies(apiKey, page);
+                    break;
+                case "upcoming":
+                    request = apiService.getUpcomingMovies(apiKey, page);
+                    break;
+                case "now_playing":
+                    request = apiService.getNowPlayingMovies(apiKey, page);
+                    break;
+                case "popular":
+                default:
+                    request = apiService.getPopularMovies(apiKey, page);
+                    break;
+            }
+            requests.add(request);
         }
 
-        return request
+        return Single.zip(requests, responses -> {
+                    List<MovieResponse> allMovieResponses = new ArrayList<>();
+                    for (Object response : responses) {
+                        allMovieResponses.addAll(((MovieListResponse) response).getResults());
+                    }
+                    return allMovieResponses;
+                })
                 .subscribeOn(Schedulers.io())
-                .flatMap(response -> {
+                .flatMap(movieResponses -> {
                     List<Single<Movie>> movieSingles = null;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        movieSingles = response.getResults().stream()
+                        movieSingles = movieResponses.stream()
                                 .map(movieResponse -> {
                                     Movie movie = mapToDomain(movieResponse);
                                     return movieDao.isMovieLiked(movie.getId(), userId)
@@ -121,18 +133,16 @@ public class MoviePagingSource extends RxPagingSource<Integer, Movie> {
                                 .collect(Collectors.toList());
                     }
 
-                    System.out.println("MoviePagingSource: Loaded " + movies.size() + " movies, filtered to " + filteredMovies.size() + " movies for page " + page);
-                    Integer nextKey = filteredMovies.isEmpty() ? null : page + 1;
-                    return (LoadResult<Integer, Movie>) new LoadResult.Page<>(
+                    System.out.println("MoviePagingSource: Loaded " + movies.size() + " movies, filtered to " + filteredMovies.size() + " movies for pages " + startPage + " to " + (startPage + pagesToLoad - 1));
+                    Integer nextKey = filteredMovies.isEmpty() ? null : startPage + pagesToLoad;
+                    return new LoadResult.Page<>(
                             filteredMovies,
-                            page == 1 ? null : page - 1,
+                            startPage == 1 ? null : startPage - 1,
                             nextKey
                     );
-                })
-                .onErrorResumeNext(throwable ->
-                        Single.just(new LoadResult.Error<Integer, Movie>(throwable))
-                );
+                });
     }
+
 
     private Movie mapToDomain(MovieResponse response) {
         String posterUrl = imageBaseUrl + posterSize + response.getPosterPath();

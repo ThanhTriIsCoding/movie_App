@@ -26,6 +26,8 @@ public class SettingsViewModel extends ViewModel {
     private final MutableLiveData<String> sortBy = new MutableLiveData<>();
     private final MutableLiveData<Integer> seekBarRating = new MutableLiveData<>();
     private final MutableLiveData<String> releaseYearInput = new MutableLiveData<>();
+    private final MutableLiveData<Integer> pagesPerLoad = new MutableLiveData<>(); // New field
+    private final MutableLiveData<String> pagesPerLoadInput = new MutableLiveData<>(); // New field
 
     @Inject
     public SettingsViewModel(SettingsUseCases settingsUseCases, SharedPreferences sharedPreferences, MainViewModel mainViewModel) {
@@ -43,6 +45,8 @@ public class SettingsViewModel extends ViewModel {
         releaseYearInput.setValue(sharedPreferences.getString("release_year", "2015"));
         int sortOption = sharedPreferences.getInt("sort_by", R.id.rb_release_date);
         sortBy.setValue(sortOption == R.id.rb_release_date ? "release_date" : "rating");
+        pagesPerLoad.setValue(sharedPreferences.getInt("pages_per_load", 1)); // Default 1
+        pagesPerLoadInput.setValue(String.valueOf(sharedPreferences.getInt("pages_per_load", 1)));
     }
 
     public MutableLiveData<String> getCategory() {
@@ -67,6 +71,13 @@ public class SettingsViewModel extends ViewModel {
 
     public MutableLiveData<String> getReleaseYearInput() {
         return releaseYearInput;
+    }
+    public MutableLiveData<Integer> getPagesPerLoad() {
+        return pagesPerLoad;
+    }
+
+    public MutableLiveData<String> getPagesPerLoadInput() {
+        return pagesPerLoadInput;
     }
 
     public void setCategory(String newCategory) {
@@ -96,11 +107,19 @@ public class SettingsViewModel extends ViewModel {
         settingsUseCases.updateSortBy(newSortBy).subscribe();
     }
 
+    public void setPagesPerLoad(int newPages) {
+        pagesPerLoad.setValue(newPages);
+        pagesPerLoadInput.setValue(String.valueOf(newPages));
+        sharedPreferences.edit().putInt("pages_per_load", newPages).apply();
+        settingsUseCases.updatePagesPerLoad(newPages).subscribe();
+    }
+
     public void resetSettings() {
         setCategory("Popular Movies");
         setRating(5);
         setReleaseYear(2015);
         setSortBy("release_date");
+        setPagesPerLoad(1); // Reset to default
         settingsUseCases.resetSettings().subscribe();
     }
 
@@ -153,6 +172,21 @@ public class SettingsViewModel extends ViewModel {
         if (checkedId != -1) {
             String newSortBy = checkedId == R.id.rb_release_date ? "release_date" : "rating";
             setSortBy(newSortBy);
+        }
+        dialog.dismiss();
+    }
+
+    public void onPagesPerLoadConfirmed(AlertDialog dialog) {
+        String pages = pagesPerLoadInput.getValue();
+        if (pages != null && !pages.isEmpty()) {
+            try {
+                int newPages = Integer.parseInt(pages);
+                if (newPages >= 1 && newPages <= 10) { // Limit to 1-10 pages
+                    setPagesPerLoad(newPages);
+                }
+            } catch (NumberFormatException e) {
+                // Handle invalid input if needed
+            }
         }
         dialog.dismiss();
     }

@@ -5,12 +5,14 @@ public class Settings {
     private int minRating;
     private int releaseYear;
     private String sortBy;
+    private int pagesPerLoad; // New field
 
-    public Settings(String category, int minRating, int releaseYear, String sortBy) {
+    public Settings(String category, int minRating, int releaseYear, String sortBy, int pagesPerLoad) {
         this.category = category;
         this.minRating = minRating;
         this.releaseYear = releaseYear;
         this.sortBy = sortBy;
+        this.pagesPerLoad = pagesPerLoad;
     }
 
     public String getCategory() {
@@ -43,5 +45,13 @@ public class Settings {
 
     public void setSortBy(String sortBy) {
         this.sortBy = sortBy;
+    }
+
+    public int getPagesPerLoad() {
+        return pagesPerLoad;
+    }
+
+    public void setPagesPerLoad(int pagesPerLoad) {
+        this.pagesPerLoad = pagesPerLoad;
     }
 }
