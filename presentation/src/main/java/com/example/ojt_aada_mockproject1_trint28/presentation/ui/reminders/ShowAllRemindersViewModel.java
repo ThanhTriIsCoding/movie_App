@@ -32,6 +32,8 @@ public class ShowAllRemindersViewModel extends ViewModel {
     public LiveData<List<Reminder>> reminders = _reminders;
     private final CompositeDisposable disposables = new CompositeDisposable();
     private BroadcastReceiver reminderDeletedReceiver;
+    private final MutableLiveData<Reminder> _navigateToMovieDetail = new MutableLiveData<>(null);
+    public LiveData<Reminder> navigateToMovieDetail = _navigateToMovieDetail;
 
     @Inject
     public ShowAllRemindersViewModel(ReminderUseCases reminderUseCases) {
@@ -85,6 +87,12 @@ public class ShowAllRemindersViewModel extends ViewModel {
                                 throwable -> Log.e("ShowAllRemindersVM", "Error deleting reminder: " + throwable.getMessage())
                         )
         );
+    }
+
+    public void onReminderClicked(Reminder reminder) {
+        _navigateToMovieDetail.setValue(reminder);
+        // Immediately reset to null to prevent re-observation
+        _navigateToMovieDetail.setValue(null);
     }
 
     @Override

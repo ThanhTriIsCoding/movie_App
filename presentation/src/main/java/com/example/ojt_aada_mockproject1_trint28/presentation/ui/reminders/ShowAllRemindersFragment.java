@@ -10,8 +10,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.domain.model.Movie;
+import com.example.domain.model.Reminder;
+import com.example.ojt_aada_mockproject1_trint28.R;
 import com.example.ojt_aada_mockproject1_trint28.databinding.FragmentShowAllRemindersBinding;
 import com.example.ojt_aada_mockproject1_trint28.presentation.adapter.ShowAllRemindersAdapter;
 
@@ -23,6 +28,8 @@ public class ShowAllRemindersFragment extends Fragment {
     private FragmentShowAllRemindersBinding binding;
     private ShowAllRemindersViewModel viewModel;
     private ShowAllRemindersAdapter adapter;
+    private NavController navController;
+    private boolean isNavigating = false; // Flag to prevent re-navigation
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -34,8 +41,9 @@ public class ShowAllRemindersFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        navController = Navigation.findNavController(view);
         viewModel = new ViewModelProvider(this).get(ShowAllRemindersViewModel.class);
-        adapter = new ShowAllRemindersAdapter(viewModel); // Truyền ViewModel vào adapter
+        adapter = new ShowAllRemindersAdapter(viewModel);
         adapter.setDisplayMode(true, true);
 
         binding.rvReminders.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -46,8 +54,43 @@ public class ShowAllRemindersFragment extends Fragment {
             adapter.setReminders(reminders);
         });
 
-        // Đăng ký BroadcastReceiver
+        // Observe navigation event with safeguard
+        viewModel.navigateToMovieDetail.observe(getViewLifecycleOwner(), reminder -> {
+            if (reminder != null && !isNavigating) {
+                isNavigating = true; // Set flag to prevent re-trigger
+                Movie movie = new Movie(
+                        reminder.getMovieId(),
+                        reminder.getTitle(),
+                        "", // Overview not available
+                        reminder.getReleaseDate(),
+                        reminder.getVoteAverage(),
+                        false, // Adult status
+                        reminder.getPosterUrl(),
+                        false // isLiked status
+                );
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("movie", movie);
+                navController.navigate(R.id.action_showAllRemindersFragment_to_movieDetailsFragment, bundle);
+                // Reset flag after navigation completes
+                getViewLifecycleOwner().getLifecycle().addObserver(new androidx.lifecycle.LifecycleEventObserver() {
+                    @Override
+                    public void onStateChanged(@NonNull androidx.lifecycle.LifecycleOwner source, @NonNull androidx.lifecycle.Lifecycle.Event event) {
+                        if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                            isNavigating = false;
+                            getViewLifecycleOwner().getLifecycle().removeObserver(this);
+                        }
+                    }
+                });
+            }
+        });
+
         viewModel.registerReminderDeletedReceiver(requireContext());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d("ShowAllRemindersFrag", "onResume called, isNavigating = " + isNavigating);
     }
 
     @Override

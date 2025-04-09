@@ -101,12 +101,10 @@
             app:destination="@id/movieListFragment"
             app:popUpTo="@id/movieListFragment"
             app:popUpToInclusive="false" />
-        <!-- Quay lại Movie Details (nếu được gọi từ Movie Details) -->
+        <!-- Đi tới Movie Details -->
         <action
             android:id="@+id/action_showAllRemindersFragment_to_movieDetailsFragment"
-            app:destination="@id/movieDetailsFragment"
-            app:popUpTo="@id/movieDetailsFragment"
-            app:popUpToInclusive="false" />
+            app:destination="@id/movieDetailsFragment" />
     </fragment>
 
     <!-- Global actions for Navigation Drawer -->
@@ -121,5 +119,4 @@
         app:destination="@id/showAllRemindersFragment"
         app:popUpTo="@id/movieListFragment"
         app:popUpToInclusive="false" />
-
 </navigation>
